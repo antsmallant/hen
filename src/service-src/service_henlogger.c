@@ -32,7 +32,7 @@ _now(struct logger * inst) {
 }
 
 struct logger *
-logger_create(void) {
+henlogger_create(void) {
 	struct logger * inst = skynet_malloc(sizeof(*inst));
 	inst->handle = NULL;
 	inst->close = 0;
@@ -42,7 +42,7 @@ logger_create(void) {
 }
 
 void
-logger_release(struct logger * inst) {
+henlogger_release(struct logger * inst) {
 	if (inst->close) {
 		fclose(inst->handle);
 	}
@@ -63,7 +63,7 @@ timestring(struct logger *inst, char tmp[SIZETIMEFMT]) {
 }
 
 static int
-logger_cb(struct skynet_context * context, void *ud, int type, int session, uint32_t source, const void * msg, size_t sz) {
+henlogger_cb(struct skynet_context * context, void *ud, int type, int session, uint32_t source, const void * msg, size_t sz) {
 	struct logger * inst = ud;
 	switch (type) {
 	case PTYPE_SYSTEM:
@@ -88,7 +88,7 @@ logger_cb(struct skynet_context * context, void *ud, int type, int session, uint
 }
 
 int
-logger_init(struct logger * inst, struct skynet_context *ctx, const char * parm) {
+henlogger_init(struct logger * inst, struct skynet_context *ctx, const char * parm) {
 	const char * r = skynet_command(ctx, "STARTTIME", NULL);
 	inst->starttime = strtoul(r, NULL, 10);
 	if (parm) {
@@ -103,7 +103,7 @@ logger_init(struct logger * inst, struct skynet_context *ctx, const char * parm)
 		inst->handle = stdout;
 	}
 	if (inst->handle) {
-		skynet_callback(ctx, inst, logger_cb);
+		skynet_callback(ctx, inst, henlogger_cb);
 		return 0;
 	}
 	return 1;

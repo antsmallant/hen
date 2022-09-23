@@ -5,10 +5,6 @@
 * enough to start a new game project quickly
 
 
-# Why hen
-* just for fun :)
-
-
 # Get started
 ## clone this project
 git clone https://github.com/antsmallant/hen.git

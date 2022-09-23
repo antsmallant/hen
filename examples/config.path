@@ -1,5 +1,5 @@
 skynet_root = "./"
-proj_root = "../../"
+proj_root = "../../../"
 
 luaservice = ""
 luaservice = luaservice..skynet_root.."service/?.lua;"
@@ -14,15 +14,15 @@ lualoader = skynet_root .. "lualib/loader.lua"
 lua_path = ""
 lua_path = lua_path..skynet_root.."lualib/?.lua;"
 lua_path = lua_path..skynet_root.."lualib/?/init.lua;"
-lua_path = lua_path..proj_root.."3rd/lualib/?.lua;"
-lua_path = lua_path..proj_root.."lualib/?.lua;"
+lua_path = lua_path..proj_root.."src/3rd/lualib/?.lua;"
+lua_path = lua_path..proj_root.."src/lualib/?.lua;"
 
 lua_cpath = ""
 lua_cpath = lua_cpath..skynet_root.."luaclib/?.so;"
 
 cpath = ""
 cpath = cpath..skynet_root.."cservice/?.so;"
-cpath = cpath..proj_root.."cservice/?.so;"
+cpath = cpath..proj_root.."src/cservice/?.so;"
 
 
 snax = ""
