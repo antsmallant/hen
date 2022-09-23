@@ -6,7 +6,7 @@ CSERVICE = henlogger
 SRC_PATH = src
 SKYNET_PATH = $(SRC_PATH)/3rd/skynet
 CSERVICE_PATH ?= $(SRC_PATH)/cservice
-CSERVICE_SRC_PATH ?= $(SRC_PATH)/service-src
+CSERVICE_SRC_PATH ?= $(SRC_PATH)/cservice-src
 SHARED := -fPIC -shared
 
 .PHONY : none $(PLATS) $(TARGETS) clean
