@@ -1,6 +1,13 @@
 -- copy from: https://github.com/HahahaVal/easy_game/blob/main/lualib/etcd_v3api.lua
 -- with little modify by antsmallant
 
+--[[
+修改说明:
+1. set/setnx/setx 只接受 string 类型的 value 参数, 不对 value 进行额外处理, 比如 json encode
+2. get/readdir 返回原始类型的 value, 不对 value 进行额外处理, 比如 json decode
+3. watch 返回原始类型的 value,  不对 value 进行额外处理, 比如 json decode
+]]
+
 local Skynet = require "skynet"
 local crypt = require "skynet.crypt"
 local Httpc = require "http.httpc"
@@ -94,8 +101,7 @@ local function format_params(params)
 end
 
 local function serialize_and_encode_base64(value)
-    value = encode_json(value)
-    if not value then
+    if type(value) ~= "string" then
         return false
     end
     return encode_base64(value)
@@ -381,8 +387,7 @@ function mt:_get(key, attr)
     if rspData.kvs and next(rspData.kvs) then
         for _, kv in ipairs(rspData.kvs) do
             kv.key = decode_base64(kv.key)
-            kv.value = decode_base64(kv.value or "")
-            kv.value = decode_json(kv.value)
+            kv.value = decode_base64(kv.value)
         end
     end
 
@@ -531,12 +536,10 @@ function mt:_request_stream(method, action, opts, timeout)
             for _, event in ipairs(data.result.events) do
                 if event.kv.value then   -- DELETE not have value
                     event.kv.value = decode_base64(event.kv.value or "")
-                    event.kv.value = decode_json(event.kv.value)
                 end
                 event.kv.key = decode_base64(event.kv.key)
                 if event.prev_kv then
                     event.prev_kv.value = decode_base64(event.prev_kv.value or "")
-                    event.prev_kv.value = decode_json(event.prev_kv.value)
                     event.prev_kv.key = decode_base64(event.prev_kv.key)
                 end
             end
