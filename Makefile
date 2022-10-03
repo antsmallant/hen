@@ -1,10 +1,13 @@
 PLAT ?= none
 PLATS = linux freebsd macosx
 CC ?= gcc
-TARGETS = skynet
-CSERVICE = henlogger
+TARGETS = skynet lua-cjson
+CSERVICE = henlogger 
 SRC_PATH = src
-SKYNET_PATH = $(SRC_PATH)/3rd/skynet
+THIRD_PATH = $(SRC_PATH)/3rd
+SKYNET_PATH = $(THIRD_PATH)/skynet
+LUACJSON_PATH = $(THIRD_PATH)/lua-cjson
+THIRD_PATH_LUACLIB = $(THIRD_PATH)/luaclib
 CSERVICE_PATH ?= $(SRC_PATH)/cservice
 CSERVICE_SRC_PATH ?= $(SRC_PATH)/cservice-src
 SHARED := -fPIC -shared
@@ -38,8 +41,15 @@ all : \
 	$(foreach v, $(CSERVICE), $(CSERVICE_PATH)/$(v).so)
 
 skynet :
-#	chmod +x -R $(SKYNET_PATH)/3rd/jemalloc 
 	$(MAKE) -C $(SKYNET_PATH) $(PLAT) CC=$(CC)
+
+
+$(THIRD_PATH_LUACLIB):
+	mkdir -p $(THIRD_PATH_LUACLIB)
+
+lua-cjson: | $(THIRD_PATH_LUACLIB)
+	$(MAKE) -C $(LUACJSON_PATH) && cp -f $(LUACJSON_PATH)/cjson.so $(THIRD_PATH_LUACLIB)/
+
 
 $(CSERVICE_PATH) :
 	mkdir $(CSERVICE_PATH)
@@ -52,6 +62,8 @@ endef
 $(foreach v, $(CSERVICE), $(eval $(call CSERVICE_TEMP,$(v))))
 
 clean :
+	rm -rf $(THIRD_PATH_LUACLIB)
 	rm -rf $(CSERVICE_PATH)/*.so 
 	rm -rf $(CSERVICE_SRC_PATH)/*.o
 	$(MAKE) -C $(SKYNET_PATH) cleanall
+	$(MAKE) -C $(LUACJSON_PATH) clean
