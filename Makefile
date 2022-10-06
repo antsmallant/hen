@@ -48,7 +48,10 @@ $(THIRD_PATH_LUACLIB):
 	mkdir -p $(THIRD_PATH_LUACLIB)
 
 lua-cjson: | $(THIRD_PATH_LUACLIB)
+	sed -i 's/^LUA_INCLUDE_DIR =   $$(PREFIX)\/include/LUA_INCLUDE_DIR =   ..\/skynet\/3rd\/lua/g' $(LUACJSON_PATH)/Makefile
 	$(MAKE) -C $(LUACJSON_PATH) && cp -f $(LUACJSON_PATH)/cjson.so $(THIRD_PATH_LUACLIB)/
+	cd $(LUACJSON_PATH) && git restore Makefile
+	
 
 
 $(CSERVICE_PATH) :
