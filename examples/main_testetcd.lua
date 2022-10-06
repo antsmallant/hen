@@ -34,6 +34,7 @@ local function etcd_get_cfg()
         hosts = hosts,
         user = user,
         password = password,
+        serializer = "raw",
     }    
 end
 
@@ -131,5 +132,5 @@ end
 local Log = setmetatable({}, {__index = function(self, k) return function(...) skynet.error("[etcd "..k.."]", ...) end end})
 
 skynet.start(function()
-    test_etcd_watch()
+    test_etcd_kv()
 end)

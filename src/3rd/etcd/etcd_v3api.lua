@@ -12,6 +12,7 @@ local skynet = require "skynet"
 local crypt = require "skynet.crypt"
 local httpc = require "http.httpc"
 local json = require "cjson.safe"
+local typeof = require "etcd.typeof"
 
 --simple log
 --todo:make it more elegant ...
@@ -100,11 +101,13 @@ local function format_params(params)
 	return table.concat(paramsT, "&")
 end
 
-local function serialize_and_encode_base64(value)
-    if type(value) ~= "string" then
-        return false
+local function serialize_and_encode_base64(serialize_fn, data)
+    local err
+    data, err = serialize_fn(data)
+    if not data then
+        return nil, err
     end
-    return encode_base64(value)
+    return encode_base64(data)
 end
 
 local function get_real_key(prefix, key)
@@ -242,7 +245,7 @@ function mt:_set(key, value, attr)
     end
     key = encode_base64(key)
 
-    value = serialize_and_encode_base64(value)
+    value = serialize_and_encode_base64(self.serializer.serialize, value)
     if not value then
         Log.error("set value invalid")
         return false
@@ -758,7 +761,7 @@ function mt:setnx(key, val, opts)
     success[1].requestPut = {}
     success[1].requestPut.key = encode_base64(key)
 
-    val = serialize_and_encode_base64(val)
+    val = serialize_and_encode_base64(self.serializer.serialize, val)
     if not val then
         Log.error("setnx value invalid")
         return false
@@ -791,7 +794,7 @@ function mt:setx(key, val, opts)
     failure[1].requestPut = {}
     failure[1].requestPut.key = encode_base64(key)
 
-    val = serialize_and_encode_base64(val)
+    val = serialize_and_encode_base64(self.serializer.serialize, val)
     if not val then
         Log.error("setx value invalid")
         return false
@@ -810,7 +813,7 @@ function mt:txn(compare, success, failure, opts)
             rule.key = encode_base64(get_real_key(self.key_prefix, rule.key))
 
             if rule.value then
-                rule.value = serialize_and_encode_base64(rule.value)
+                rule.value = serialize_and_encode_base64(self.serializer.serialize, rule.value)
                 if not rule.value then
                     Log.error("txn value invalid")
                     return false
@@ -829,7 +832,7 @@ function mt:txn(compare, success, failure, opts)
             if rule.requestPut then
                 local requestPut = tab_clone(rule.requestPut)
                 requestPut.key = encode_base64(get_real_key(self.key_prefix, requestPut.key))
-                requestPut.value = serialize_and_encode_base64(requestPut.value)
+                requestPut.value = serialize_and_encode_base64(self.serializer.serialize, requestPut.value)
                 if not requestPut.value then
                     Log.error("txn value invalid")
                     return false
@@ -980,12 +983,24 @@ function mt:rmdir(key, opts)
     return self:_delete(key, attr)
 end
 
+local function require_serializer(serializer_name)
+    if serializer_name then
+        local ok, module = pcall(require, "etcd.serializers." .. serializer_name)
+        if ok then
+            return module
+        end
+    end
+
+    return require("etcd.serializers.raw")
+end
+
 function M.new(opts)
     local hosts = opts.hosts
     local key_prefix = opts.key_prefix
     local timeout = opts.timeout
     local user = opts.user
     local password = opts.password
+    local serializer = opts.serializer
 
     if type(hosts) ~= "table" then
         Log.error("hosts must be table")
@@ -1007,6 +1022,9 @@ function M.new(opts)
         return false
     end
 
+    local serializer_name = typeof.string(opts.serializer) and opts.serializer
+    local serializer = require_serializer(serializer_name)
+
     local obj = {
         full_prefix = "/v3",
         hosts = hosts,
@@ -1016,6 +1034,7 @@ function M.new(opts)
         max_fail = 2,
         user = user,
         password = password,
+        serializer = serializer,
         last_auth_time = nil,
         jwt_token = nil,
     }
