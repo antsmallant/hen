@@ -41,7 +41,7 @@ all : \
 	$(foreach v, $(CSERVICE), $(CSERVICE_PATH)/$(v).so)
 
 skynet :
-	$(MAKE) -C $(SKYNET_PATH) $(PLAT) CC=$(CC)
+	$(MAKE) -C $(SKYNET_PATH) $(PLAT) CC=$(CC) TLS_MODULE=ltls
 
 
 $(THIRD_PATH_LUACLIB):
