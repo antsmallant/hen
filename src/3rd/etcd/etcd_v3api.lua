@@ -10,7 +10,7 @@
 
 local skynet = require "skynet"
 local crypt = require "skynet.crypt"
-local Httpc = require "http.httpc"
+local httpc = require "http.httpc"
 local json = require "cjson.safe"
 
 --simple log
@@ -37,7 +37,7 @@ mt.__index = mt
 
 local fail_hosts = {}   --响应失败的host列表
 
-Httpc.dns() -- 异步查询 dns，避免阻塞整个 skynet 的网络消息
+httpc.dns() -- 异步查询 dns，避免阻塞整个 skynet 的网络消息
 
 local function url_decode(str)
     local str = str:gsub('+', ' ')
@@ -169,7 +169,7 @@ function mt:_http_request_uri(method, action, recvheader, header, reqData)
     if not reqHost then
         return false, NONEXIST
     end
-    local success, status, rspData = pcall(Httpc.request, method, reqHost, action, recvheader, header, reqData)
+    local success, status, rspData = pcall(httpc.request, method, reqHost, action, recvheader, header, reqData)
     if not success then
         self:_report_failure(reqHost)
         return false, reqHost .. ":" .. (rspData or "")
@@ -194,7 +194,7 @@ function mt:_request(method, action, opts, timeout, ignore_auth)
         reqData = encode_json(opts.body)
     end
 
-    Httpc.timeout = timeout and timeout * 100
+    httpc.timeout = timeout and timeout * 100
 
 	local header = {
 		["content-type"] = "application/x-www-form-urlencoded"
@@ -462,7 +462,7 @@ function mt:_http_request_stream(method, action, recvheader, header, reqData)
     if not reqHost then
         return false, NONEXIST
     end
-    local success, stream = pcall(Httpc.request_stream, method, reqHost, action, recvheader, header, reqData)
+    local success, stream = pcall(httpc.request_stream, method, reqHost, action, recvheader, header, reqData)
     if not success then
         self:_report_failure(reqHost)
         return false, reqHost .. ": request_stream error"
@@ -483,7 +483,7 @@ function mt:_request_stream(method, action, opts, timeout)
         reqData = encode_json(opts.body)
     end
 
-    Httpc.timeout = timeout and timeout * 100
+    httpc.timeout = timeout and timeout * 100
 
 	local header = {
 		["content-type"] = "application/x-www-form-urlencoded"
