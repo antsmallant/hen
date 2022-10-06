@@ -1,1 +1,0 @@
-copy from https://github.com/JieTrancender/skynet-etcd

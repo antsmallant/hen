@@ -8,19 +8,19 @@
 3. watch 返回原始类型的 value,  不对 value 进行额外处理, 比如 json decode
 ]]
 
-local Skynet = require "skynet"
+local skynet = require "skynet"
 local crypt = require "skynet.crypt"
 local Httpc = require "http.httpc"
-local Json = require "json"
+local json = require "cjson.safe"
 
 --simple log
 --todo:make it more elegant ...
-local Log = setmetatable({}, {__index = function(self, k) return function(...) Skynet.error("[etcd "..k.."]", ...) end end})
+local Log = setmetatable({}, {__index = function(self, k) return function(...) skynet.error("[etcd "..k.."]", ...) end end})
 
 local encode_base64 = crypt.base64encode
 local decode_base64 = crypt.base64decode
-local decode_json = Json.decode
-local encode_json = Json.encode
+local decode_json = json.decode
+local encode_json = json.encode
 
 local sub_str = string.sub
 local str_byte = string.byte
@@ -112,7 +112,7 @@ local function get_real_key(prefix, key)
 end
 
 function mt:refresh_jwt_token(timeout)
-    local now = Skynet.now()
+    local now = skynet.now()
     if self.jwt_token and now - self.last_auth_time < 60 * 3 + random(0, 60) then
         return true
     end
@@ -140,7 +140,7 @@ function mt:_get_target_status(etcd_host)
         return false
     end
     local fail_expired_time = fail_hosts[etcd_host]
-    if fail_expired_time and fail_expired_time >= Skynet.now() then
+    if fail_expired_time and fail_expired_time >= skynet.now() then
         return false
     else
         return true
@@ -151,7 +151,7 @@ function mt:_report_failure(etcd_host)
     if type(etcd_host) ~= "string" then
         return false
     end
-    fail_hosts[etcd_host] = Skynet.now() + self.fail_time
+    fail_hosts[etcd_host] = skynet.now() + self.fail_time
 end
 
 function mt:_choose_endpoint()

@@ -1,9 +1,9 @@
 local skynet = require "skynet"
 local sprotoloader = require "sprotoloader"
-local Etcd = require "etcd_v3api"
+local etcdcli = require "etcd.etcd_v3api"
 local lua_util = require "lua_util"
 local skynet_util = require "skynet_util"
-local json = require "json"
+local json = require "cjson.safe"
 
 
 local function test_json()
@@ -43,7 +43,7 @@ local function test_etcd_kv()
 
     local opts = etcd_get_cfg()
     opts.key_prefix = "/etc"
-    local etcd_cli = Etcd.new(opts)
+    local etcd_cli = etcdcli.new(opts)
 
     etcd_cli:set("/server1", "127.0.0.1:8001")
     etcd_cli:set("/server2", "127.0.0.1:8002")
@@ -64,7 +64,7 @@ local function test_etcd_watch()
 
     local opts = etcd_get_cfg()
     opts.key_prefix = "/etc"
-    local etcd_cli = Etcd.new(opts)
+    local etcd_cli = etcdcli.new(opts)
 
     local etcd_ttl = 10
     local prefix = "/"
