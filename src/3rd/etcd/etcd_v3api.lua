@@ -390,7 +390,8 @@ function mt:_get(key, attr)
     if rspData.kvs and next(rspData.kvs) then
         for _, kv in ipairs(rspData.kvs) do
             kv.key = decode_base64(kv.key)
-            kv.value = decode_base64(kv.value)
+            kv.value = decode_base64(kv.value or "")
+            kv.value = self.serializer.deserialize(kv.value)            
         end
     end
 
@@ -539,11 +540,14 @@ function mt:_request_stream(method, action, opts, timeout)
             for _, event in ipairs(data.result.events) do
                 if event.kv.value then   -- DELETE not have value
                     event.kv.value = decode_base64(event.kv.value or "")
+                    event.kv.value = self.serializer.deserialize(event.kv.value)
+
                 end
                 event.kv.key = decode_base64(event.kv.key)
                 if event.prev_kv then
                     event.prev_kv.value = decode_base64(event.prev_kv.value or "")
-                    event.prev_kv.key = decode_base64(event.prev_kv.key)
+                    event.prev_kv.value = self.serializer.deserialize(event.prev_kv.value)
+                    event.prev_kv.key = decode_base64(event.prev_kv.key)                    
                 end
             end
         end
