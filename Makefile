@@ -1,18 +1,19 @@
 PLAT ?= none
 PLATS = linux freebsd macosx
 CC ?= gcc
-TARGETS = skynet lua-cjson
+TARGETS = skynet lua-cjson luafilesystem
 CSERVICE = henlogger 
 SRC_PATH = src
 THIRD_PATH = $(SRC_PATH)/3rd
 SKYNET_PATH = $(THIRD_PATH)/skynet
 LUACJSON_PATH = $(THIRD_PATH)/lua-cjson
+LUAFILESYSTEM_PATH = $(THIRD_PATH)/luafilesystem
 THIRD_PATH_LUACLIB = $(THIRD_PATH)/luaclib
 CSERVICE_PATH ?= $(SRC_PATH)/cservice
 CSERVICE_SRC_PATH ?= $(SRC_PATH)/cservice-src
 SHARED := -fPIC -shared
 
-.PHONY : none $(PLATS) $(TARGETS) clean
+.PHONY : none $(PLATS) $(TARGETS) clean clean3rd
 
 #ifneq ($(PLAT), none)
 .PHONY : default
@@ -47,15 +48,20 @@ skynet :
 $(THIRD_PATH_LUACLIB):
 	mkdir -p $(THIRD_PATH_LUACLIB)
 
+
 lua-cjson: | $(THIRD_PATH_LUACLIB)
 	sed -i 's/^LUA_INCLUDE_DIR =   $$(PREFIX)\/include/LUA_INCLUDE_DIR =   ..\/skynet\/3rd\/lua/g' $(LUACJSON_PATH)/Makefile
 	$(MAKE) -C $(LUACJSON_PATH) && cp -f $(LUACJSON_PATH)/cjson.so $(THIRD_PATH_LUACLIB)/
 	cd $(LUACJSON_PATH) && git restore Makefile
 	
 
+luafilesystem: | $(THIRD_PATH_LUACLIB)
+	$(MAKE) -C $(LUAFILESYSTEM_PATH) lib LUA_INC="-I..\/skynet\/3rd\/lua" && cp -f $(LUAFILESYSTEM_PATH)/src/lfs.so $(THIRD_PATH_LUACLIB)/
+
 
 $(CSERVICE_PATH) :
 	mkdir $(CSERVICE_PATH)
+
 
 define CSERVICE_TEMP
   $$(CSERVICE_PATH)/$(1).so : $(CSERVICE_SRC_PATH)/service_$(1).c | $$(CSERVICE_PATH)
@@ -70,3 +76,12 @@ clean :
 	rm -rf $(CSERVICE_SRC_PATH)/*.o
 	$(MAKE) -C $(SKYNET_PATH) cleanall
 	$(MAKE) -C $(LUACJSON_PATH) clean
+	$(MAKE) -C $(LUAFILESYSTEM_PATH) clean
+
+
+clean3rd:
+	rm -rf $(THIRD_PATH_LUACLIB)
+	rm -rf $(CSERVICE_PATH)/*.so 
+	rm -rf $(CSERVICE_SRC_PATH)/*.o	
+	$(MAKE) -C $(LUACJSON_PATH) clean
+	$(MAKE) -C $(LUAFILESYSTEM_PATH) clean
