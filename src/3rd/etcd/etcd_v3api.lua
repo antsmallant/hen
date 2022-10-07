@@ -234,6 +234,10 @@ function mt:_request(method, action, opts, timeout, ignore_auth)
     end
 
     local result = decode_json(rspData)
+    if not result then
+        Log.error("rspData decode fail, rspData:", rspData)
+        return nil
+    end
     result.recvheader = recvheader
     return result
 end
