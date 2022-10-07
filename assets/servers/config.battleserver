@@ -1,8 +1,8 @@
 include "config.common"
 
-logger = log_dir .. "battleserver.log"
-daemon = run_dir .. "battleserver.pid"
+servertype = "battleserver"
 
-start = "battleserver"
+logger = log_dir .. servertype .. ".log"
+daemon = run_dir .. servertype .. ".pid"
 
-
+start = servertype

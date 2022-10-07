@@ -5,7 +5,8 @@ local lua_util = require "lua_util"
 local skynet_util = require "skynet_util"
 local json = require "cjson.safe"
 
+local servertype = skynet.getenv "servertype"
 
 skynet.start(function()
-    skynet.error("gatewayserver started")
+    skynet.error(servertype .. " started")
 end)
