@@ -1,0 +1,9 @@
+include "config.common"
+
+servertype = "plazaserver"
+
+logger = log_dir .. servertype .. ".log"
+daemon = run_dir .. servertype .. ".pid"
+
+start = servertype
+

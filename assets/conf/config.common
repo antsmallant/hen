@@ -1,0 +1,42 @@
+skynet_root = "./"
+proj_root = "../../../"
+
+luaservice = ""
+luaservice = luaservice..skynet_root.."service/?.lua;"
+luaservice = luaservice..proj_root.."src/service/?.lua;"
+
+
+lualoader = skynet_root .. "lualib/loader.lua"
+
+lua_path = ""
+lua_path = lua_path..skynet_root.."lualib/?.lua;"
+lua_path = lua_path..skynet_root.."lualib/?/init.lua;"
+lua_path = lua_path..proj_root.."src/3rd/lualib/?.lua;"
+lua_path = lua_path..proj_root.."src/lualib/?.lua;"
+lua_path = lua_path..proj_root.."src/3rd/?.lua;"
+
+lua_cpath = ""
+lua_cpath = lua_cpath..skynet_root.."luaclib/?.so;"
+lua_cpath = lua_cpath..proj_root.."src/3rd/luaclib/?.so;"
+
+cpath = ""
+cpath = cpath..skynet_root.."cservice/?.so;"
+cpath = cpath..proj_root.."src/cservice/?.so;"
+
+snax = ""
+
+
+etcd_hosts = "[\"127.0.0.1:2379\"]" -- json array
+etcd_user = "root"
+etcd_password = "123456"
+
+thread = 8
+logservice = "henlogger"
+logpath = "."
+harbor = 0
+bootstrap = "snlua bootstrap"
+
+proj_dir = "../../../"
+assets_dir = proj_dir .. "assets/"
+run_dir = assets_dir .. "run/"
+log_dir = assets_dir .. "log/"

@@ -1,0 +1,8 @@
+include "config.common"
+
+logger = log_dir .. "battleserver.log"
+daemon = run_dir .. "battleserver.pid"
+
+start = "battleserver"
+
+

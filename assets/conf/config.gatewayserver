@@ -1,0 +1,8 @@
+include "config.common"
+
+servertype = "gatewayserver"
+
+logger = log_dir .. servertype .. ".log"
+daemon = run_dir .. servertype .. ".pid"
+
+start = servertype
