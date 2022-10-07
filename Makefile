@@ -56,7 +56,9 @@ lua-cjson: | $(THIRD_PATH_LUACLIB)
 	
 
 luafilesystem: | $(THIRD_PATH_LUACLIB)
+	sed -i 's/^LUA_VERSION = 5.1/LUA_VERSION = 5.4/g' $(LUAFILESYSTEM_PATH)/config
 	$(MAKE) -C $(LUAFILESYSTEM_PATH) lib LUA_INC="-I..\/skynet\/3rd\/lua" && cp -f $(LUAFILESYSTEM_PATH)/src/lfs.so $(THIRD_PATH_LUACLIB)/
+	cd $(LUAFILESYSTEM_PATH) && git restore config
 
 
 $(CSERVICE_PATH) :
