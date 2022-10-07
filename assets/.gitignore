@@ -1,2 +1,2 @@
-./run/*.pid
-./log/*.log
+run/*.pid
+log/*.log
