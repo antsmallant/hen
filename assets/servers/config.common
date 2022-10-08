@@ -40,3 +40,5 @@ proj_dir = "../../../"
 assets_dir = proj_dir .. "assets/"
 run_dir = assets_dir .. "run/"
 log_dir = assets_dir .. "log/"
+
+cluster_ttl = 30

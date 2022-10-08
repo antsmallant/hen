@@ -5,8 +5,9 @@ local lua_util = require "lua_util"
 local skynet_util = require "skynet_util"
 local json = require "cjson.safe"
 
-local servertype = skynet.getenv "servertype"
+local k_servertype = skynet.getenv "servertype"
 
 skynet.start(function()
-    skynet.error(servertype .. " started")
+    skynet.newservice("cluster_mgr")
+    skynet.error(k_servertype .. " started")
 end)
