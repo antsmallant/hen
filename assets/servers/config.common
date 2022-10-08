@@ -41,6 +41,6 @@ assets_dir = proj_dir .. "assets/"
 run_dir = assets_dir .. "run/"
 log_dir = assets_dir .. "log/"
 
-cluster_ttl = 30
+cluster_ttl = 10
 
 loglevel = "debug"  --debug \ info \ error
