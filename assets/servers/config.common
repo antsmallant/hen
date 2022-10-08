@@ -42,3 +42,5 @@ run_dir = assets_dir .. "run/"
 log_dir = assets_dir .. "log/"
 
 cluster_ttl = 30
+
+loglevel = "debug"  --debug \ info \ error

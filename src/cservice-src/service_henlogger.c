@@ -72,11 +72,6 @@ henlogger_cb(struct skynet_context * context, void *ud, int type, int session, u
 		}
 		break;
 	case PTYPE_TEXT:
-		if (inst->filename) {
-			char tmp[SIZETIMEFMT];
-			int csec = timestring(ud, tmp);
-			fprintf(inst->handle, "%s.%02d ", tmp, csec);
-		}
         fprintf(inst->handle, "[%s :%08x] ", _now(inst), source);
 		fwrite(msg, sz , 1, inst->handle);
 		fprintf(inst->handle, "\n");
