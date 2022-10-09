@@ -12,6 +12,8 @@ local g_clustercfg
 local g_etcdcli
 local k_key_prefix = "/cluster"
 local k_key_sep = "/"
+local k_init_retry_times = 30   --初始化的时候最多重试次数
+local k_retry_inv = 2           --重试间隔(秒)
 
 --[[
 store cluster data, table format:
@@ -66,37 +68,44 @@ local function reg_self(etcdcli, servertype, clustercfg, key_sep)
 
     local function do_reg()
         local grantres = etcdcli:grant(clustercfg.ttl)
-        lease = grantres.ID
-        skynet.error("do_reg grantres:", lua_util.tostring(grantres))        
+        lease = grantres and grantres.ID
+        if not lease then
+            error(string.format("do_reg fail, get nil lease, grantres:%s", lua_util.tostring(grantres)))
+        end
+
         local cluster_id, cluster_value = gen_cluster_kv(servertype, clustercfg, key_sep) 
         local attr = {lease = lease}
-        local setres = etcdcli:set(cluster_id, cluster_value, attr)       
-        logger.info("do_reg cluster_id:%s, cluster_value:%s, setres:%s", 
-            cluster_id, cluster_value, lua_util.tostring(setres))                                   
+        local setres = etcdcli:set(cluster_id, cluster_value, attr)     
+        if not (setres and setres.header and setres.header.revision) then
+            error(string.format("do_reg fail, cluster_id:%s, cluster_value:%s, lease:%s, setres:%s", 
+                cluster_id, cluster_value, lease, lua_util.tostring(setres)))
+        end
+        logger.info("do_reg success, cluster_id:%s, cluster_value:%s, lease:%s",
+            cluster_id, cluster_value, lease)
     end
-
-    --注册自己
-    do_reg()
-
-    --续约
+    
     local function do_keepalive()
         local keepaliveres = etcdcli:keepalive(lease)
-        --skynet.error("reg_self keepaliveres:", lua_util.tostring(keepaliveres))
 
         if keepaliveres and keepaliveres.result and keepaliveres.result.TTL then
             --success
-            skynet.error("reg_self keepalive suc, TTL:", keepaliveres.result.TTL)
             return keepaliveres.result.TTL
         else
             --fail
-            skynet.error("reg_self keepalive fail, do_reg again")
-            do_reg()           
+            logger.error("do_keepalive fail, will try do_reg, keepaliveres:%s", lua_util.tostring(keepaliveres))
+            skynet_util.error_retry(-1, k_retry_inv, do_reg) --运行期间无限次数进行重试
         end
     end
 
+    --注册自己
+    local ok = skynet_util.error_retry(k_init_retry_times, k_retry_inv, do_reg)
+    if not ok then
+        error("do_reg finally fail")
+    end    
+
+    --定时续约
     skynet.fork(function()
         local inv = math.ceil(clustercfg.ttl/2.0)
-        inv = clustercfg.ttl+2
         while true do
             skynet.sleep(inv*100)
             local ok, ttl = xpcall(do_keepalive, skynet_util.handle_err)
@@ -121,7 +130,6 @@ end
     _k looks like: /cluster/battleserver_127.0.0.1_8102
     after extract, looks like: battleserver_127.0.0.1_8102
 ]]
-
 local function extract_cluster_id(_key, key_prefix, key_sep)
     local start = key_prefix..key_sep
     return _key:sub(#start+1)
@@ -135,24 +143,28 @@ clusterdata: {
 }
 ]]
 local function fetch_cluster(etcdcli, key_prefix, key_sep)
+    logger.info("fetch_cluster begin, key_prefix:%s, key_sep:%s", key_prefix, key_sep)
+
     local ret = etcdcli:readdir(key_sep)
-    skynet.error("fetch_cluster ret:", lua_util.tostring(ret))
+    if not (ret and ret.header and ret.header.revision) then
+        error(string.format("fetch_cluster fail, ret:%s", lua_util.tostring(ret)))
+    end
 
     local info = {}
     if ret.kvs then
         for k, v in ipairs(ret.kvs) do
-            local cluster_id = extract_cluster_id(v.key, k_key_prefix, k_key_sep)
+            local cluster_id = extract_cluster_id(v.key, key_prefix, key_sep)
             info[cluster_id] = v.value
         end
     end
 
     local clusterdata = {}
-    clusterdata.rev = ret and ret.header and ret.header.revision
+    clusterdata.rev = ret.header.revision
     clusterdata.info = info
 
-    skynet.error("fetch_cluster, clusterdata:", lua_util.tostring(clusterdata))
+    logger.info("fetch_cluster suc, clusterdata: %s", lua_util.tostring(clusterdata))
 
-    return clusterdata
+    return clusterdata        
 end
 
 --[[监听节点变化
@@ -162,7 +174,7 @@ end
     }
     注意: clusterdata 内部的数据会被本函数改变
 ]]
-local function watch_cluster(etcdcli, clusterdata, key_prefix, key_sep)
+local function watch_cluster(etcdcli, key_prefix, key_sep, clusterdata)
     assert(type(clusterdata) == "table", "invalid clusterdata")
 
     --此函数不可添加阻塞操作，不可打断，否则会造成数据不一致
@@ -173,14 +185,14 @@ local function watch_cluster(etcdcli, clusterdata, key_prefix, key_sep)
             return 
         end
         local revision = result.header.revision
-        assert(revision, "nil revision")
+        assert(revision, "watch recv nil revision")
 
         --没有数据要处理
         if not result.events then
             return
         end
 
-        logger.info("on_data before, clusterdata: %s", lua_util.tostring(clusterdata))
+        --logger.info("on_data before, clusterdata: %s", lua_util.tostring(clusterdata))
 
         --处理 events
         local info = clusterdata.info
@@ -198,7 +210,7 @@ local function watch_cluster(etcdcli, clusterdata, key_prefix, key_sep)
         --最后再设置 revision
         clusterdata.rev = revision
 
-        logger.info("on_data after, clusterdata: %s", lua_util.tostring(clusterdata))
+        logger.info("watch_cluster on_data suc, clusterdata: %s", lua_util.tostring(clusterdata))
     end
 
     local function do_watch()
@@ -212,7 +224,7 @@ local function watch_cluster(etcdcli, clusterdata, key_prefix, key_sep)
         while true do
             local data = reader()
             if data then
-                logger.info("do_watch recv: %s", lua_util.tostring(data))
+                --logger.info("do_watch recv: %s", lua_util.tostring(data))
                 on_data(data)            
             else
                 break
@@ -229,6 +241,8 @@ local function watch_cluster(etcdcli, clusterdata, key_prefix, key_sep)
             skynet.sleep(5*100)
         end
     end)
+
+    return true
 end
 
 function command.hello(source, msg)
@@ -267,16 +281,22 @@ skynet.start(function()
 	end
 
     --fetch and watch cluster info
-    skynet.fork(function ()
-        g_clusterdata = fetch_cluster(g_etcdcli, k_key_prefix, k_key_sep)
-        watch_cluster(g_etcdcli, g_clusterdata, k_key_prefix, k_key_sep)
-    end)
+    local ok, clusterdata = skynet_util.error_retry(k_init_retry_times, k_retry_inv, fetch_cluster, g_etcdcli, k_key_prefix, k_key_sep)
+    if ok and clusterdata then
+        g_clusterdata = clusterdata
+    else
+        error("fetch_cluster fail")
+    end
+
+    watch_cluster(g_etcdcli, k_key_prefix, k_key_sep, g_clusterdata)
 
     skynet.register ".cluster_mgr"
 
+    --for test
     skynet.timeout(30*100, function()
         skynet.send(skynet.self(), "lua", "shutdown")
     end)
+    --end test
 
     skynet.error("cluster_mgr started")
 end)

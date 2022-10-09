@@ -431,7 +431,7 @@ function mt:_delete(key, attr)
 
     local rspData = self:_request("POST", "/kv/deleterange", opts, self.timeout)
     if not rspData then
-        Log.error("ectd error delete rspData:%s, key:%s", rspData, key)
+        Log.error(string.format("ectd fail delete key:%s", key))
         return false
     end
     return rspData
@@ -535,9 +535,13 @@ function mt:_request_stream(method, action, opts, timeout)
         end
 
         local data = decode_json(chunk)
-        if not data or data.error then
-            Log.error("failed to decode json data: " .. chunk)
+        if not data then
+            Log.error("read_watch decode fail, chunk: " .. chunk)
             return false
+        end
+        if data.error then
+            Log.error("read_watch meet error, chunk: " .. chunk)
+            return false            
         end
 
         if data.result and data.result.events then
