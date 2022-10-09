@@ -1,4 +1,4 @@
 #!/bin/bash
 
-export COMPOSE_PROJECT_NAME="4gameexamples"
+export COMPOSE_PROJECT_NAME="hen_examples"
 docker-compose stop
