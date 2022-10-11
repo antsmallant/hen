@@ -9,3 +9,5 @@ start = servertype
 
 cluster_ip = "127.0.0.1"
 cluster_port = 8103
+
+debug_port = 7103

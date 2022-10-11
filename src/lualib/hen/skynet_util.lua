@@ -40,4 +40,25 @@ function _M.error_retry(max_times, sleep_inv, func, ...)
     return false
 end
 
+
+function _M.lua_docmd(cmdhandler, session, cmd, ...)
+    if type(cmdhandler) == "function" then
+        local f = cmdhandler
+        if session ~= 0 then
+            return skynet.ret(skynet.pack(f(...)))
+        else
+            return f(...)
+        end
+    end
+	local f = cmdhandler[cmd]
+	if not f then
+		return error(string.format("Unknown command: %s, session: %s", tostring(cmd), session))
+	end
+	if session == 0 then
+		return f(...)
+	else
+		return skynet.ret(skynet.pack(f(...)))
+	end
+end
+
 return _M

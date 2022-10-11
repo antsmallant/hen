@@ -12,3 +12,5 @@ files=`find ../src/service/ -name '*.lua'`
 luacheck $files $flag >> luacheck_result.log
 
 grep -v "Checking.*OK" luacheck_result.log
+
+rm luacheck_result.log

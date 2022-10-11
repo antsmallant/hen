@@ -5,7 +5,6 @@ local etcd_v3api = require "etcd.etcd_v3api"
 local lua_util = require "lua_util"
 local skynet_util = require "hen.skynet_util"
 local logger = require "hen.logger"
-local cluster = require "skynet.cluster"
 
 local command = {}
 local g_servertype = assert(skynet.getenv("servertype"), "invalid servertype")
@@ -254,15 +253,19 @@ local function watch_cluster(etcdcli, key_prefix, key_sep, clusterdata)
 end
 
 --获取符合 pat 规则的服务器名字列表
---pat : string, 正则表达式, 比如要获取所有 plazaserver, 则 "^plazaserver.*", 如果获取所有 server, 则 ".*"
-function command.names(source, pat)
-
-end
-
---获取符合 pat 规则的服务器名字列表中一个
---pat : string, 正则表达式, 比如要获取所有 plazaserver, 则 "^plazaserver.*", 如果获取所有 server, 则 ".*"
-function command.oneof(source, pat)
-
+--pat : string, 正则表达式, 1、nil 或 ".*" 表示获取全部的服务器名字; 2、按照正常的 lua 正则规则进行匹配
+--      比如要获取所有 plazaserver, 则 "^plazaserver.*", 如果获取所有 server, 则 nil 或 ".*"
+function command.get_names(source, pat)
+	local names = {}
+    local info = g_clusterdata.info
+	if not pat or pat == ".*" then
+		for name in pairs(info) do table.insert(names, name) end
+		return names
+	end
+	for name in pairs(info) do
+		if name:match(pat) == name then table.insert(names, name) end
+	end
+	return names
 end
 
 function command.shutdown(source)
@@ -271,9 +274,14 @@ function command.shutdown(source)
     return ok
 end
 
+function command.hello(source, msg)
+    logger.info("recv %s from: %s", msg, source)
+    return "hi"
+end
+
 skynet.start(function()
 	skynet.dispatch("lua", function(session, source, cmd, ...)
-		return assert(command[string.lower(cmd)])(source, ...)
+        return skynet_util.lua_docmd(command, session, cmd, source, ...)
 	end)
 
     g_clustercfg = get_cluster_cfg()
