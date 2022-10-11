@@ -1,0 +1,12 @@
+Checking ../src/lualib/skynet_util.lua            OK
+Checking ../src/lualib/cluster_util.lua           OK
+Checking ../src/lualib/logger.lua                 OK
+
+Total: 0 warnings / 0 errors in 3 files
+Checking ../src/service/plazaserver.lua           OK
+Checking ../src/service/cluster_mgr.lua           OK
+Checking ../src/service/battleserver.lua          OK
+Checking ../src/service/gatewayserver.lua         OK
+Checking ../src/service/hencluster.lua            OK
+
+Total: 0 warnings / 0 errors in 5 files
