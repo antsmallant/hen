@@ -26,7 +26,7 @@ function _M.error_retry(max_times, sleep_inv, func, ...)
     assert(typeof.int(max_times), "max_times not an integer")
     assert(typeof.number(sleep_inv), "sleep_inv not an integer")
     assert(typeof.Function(func), "func not an function")
-    
+
     sleep_inv = math.ceil(sleep_inv*100) -- skynet.sleep是以0.01秒为单位的
     local cnt = 0
     while max_times == -1 or cnt < max_times do

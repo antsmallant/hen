@@ -3,8 +3,9 @@ local cluster = require "skynet.cluster"
 local json = require "cjson.safe"
 local etcd_v3api = require "etcd.etcd_v3api"
 local lua_util = require "lua_util"
-local skynet_util = require "skynet_util"
-local logger = require "logger"
+local skynet_util = require "hen.skynet_util"
+local logger = require "hen.logger"
+local cluster = require "skynet.cluster"
 
 local command = {}
 local g_servertype = assert(skynet.getenv("servertype"), "invalid servertype")
@@ -18,11 +19,11 @@ local k_retry_inv = 2           --重试间隔(秒)
 --[[
 store cluster data, table format:
 {
-    rev = <data revision>, 
+    rev = <data revision>,
     info = {<clusterid>=<clustervalue>, ...}
-}    
+}
 ]]
-local g_clusterdata     
+local g_clusterdata
 
 local function get_cluster_cfg()
     local cfg = {}
@@ -46,7 +47,7 @@ local function get_etcd_cfg()
         user = user,
         password = password,
         serializer = "raw",
-    }    
+    }
 end
 
 local function create_etcdcli(key_prefix)
@@ -59,7 +60,7 @@ end
 --return cluster_id, cluster_value
 local function gen_cluster_kv(servertype, clustercfg, key_sep)
     local cluster_id = string.format("%s%s_%s_%s", key_sep, servertype, clustercfg.ip, clustercfg.port)
-    local cluster_value = string.format("%s:%s", clustercfg.ip, clustercfg.port)       
+    local cluster_value = string.format("%s:%s", clustercfg.ip, clustercfg.port)
     return cluster_id, cluster_value
 end
 
@@ -73,17 +74,17 @@ local function reg_self(etcdcli, servertype, clustercfg, key_sep)
             error(string.format("do_reg fail, get nil lease, grantres:%s", lua_util.tostring(grantres)))
         end
 
-        local cluster_id, cluster_value = gen_cluster_kv(servertype, clustercfg, key_sep) 
+        local cluster_id, cluster_value = gen_cluster_kv(servertype, clustercfg, key_sep)
         local attr = {lease = lease}
-        local setres = etcdcli:set(cluster_id, cluster_value, attr)     
+        local setres = etcdcli:set(cluster_id, cluster_value, attr)
         if not (setres and setres.header and setres.header.revision) then
-            error(string.format("do_reg fail, cluster_id:%s, cluster_value:%s, lease:%s, setres:%s", 
+            error(string.format("do_reg fail, cluster_id:%s, cluster_value:%s, lease:%s, setres:%s",
                 cluster_id, cluster_value, lease, lua_util.tostring(setres)))
         end
         logger.info("do_reg success, cluster_id:%s, cluster_value:%s, lease:%s",
             cluster_id, cluster_value, lease)
     end
-    
+
     local function do_keepalive()
         local keepaliveres = etcdcli:keepalive(lease)
 
@@ -101,7 +102,7 @@ local function reg_self(etcdcli, servertype, clustercfg, key_sep)
     local ok = skynet_util.error_retry(k_init_retry_times, k_retry_inv, do_reg)
     if not ok then
         error("do_reg finally fail")
-    end    
+    end
 
     --定时续约
     skynet.fork(function()
@@ -120,10 +121,10 @@ end
 
 
 local function unreg_self(etcdcli, servertype, clustercfg, key_sep)
-    local cluster_id, _ = gen_cluster_kv(servertype, clustercfg, key_sep) 
-    local res = etcdcli:delete(cluster_id, {timeout = 2})       
-    logger.info("unreg_self cluster_id:%s, res:%s", 
-        cluster_id, lua_util.tostring(res))       
+    local cluster_id, _ = gen_cluster_kv(servertype, clustercfg, key_sep)
+    local res = etcdcli:delete(cluster_id, {timeout = 2})
+    logger.info("unreg_self cluster_id:%s, res:%s",
+        cluster_id, lua_util.tostring(res))
 end
 
 --[[
@@ -164,12 +165,12 @@ local function fetch_cluster(etcdcli, key_prefix, key_sep)
 
     logger.info("fetch_cluster suc, clusterdata: %s", lua_util.tostring(clusterdata))
 
-    return clusterdata        
+    return clusterdata
 end
 
 --[[监听节点变化
     clusterdata: {
-        rev = <data revision>, 
+        rev = <data revision>,
         info = {<clusterid>=<clustervalue>, ...}
     }
     注意: clusterdata 内部的数据会被本函数改变
@@ -178,21 +179,20 @@ local function watch_cluster(etcdcli, key_prefix, key_sep, clusterdata)
     assert(type(clusterdata) == "table", "invalid clusterdata")
 
     --此函数不可添加阻塞操作，不可打断，否则会造成数据不一致
+    --return true if data changed
     local function on_data(data)
         local result = data.result
         if not (result and result.header) then
             logger.error("watch_cluster on_data invalid data: %s", lua_util.tostring(data))
-            return 
+            return false
         end
         local revision = result.header.revision
         assert(revision, "watch recv nil revision")
 
         --没有数据要处理
         if not result.events then
-            return
+            return false
         end
-
-        --logger.info("on_data before, clusterdata: %s", lua_util.tostring(clusterdata))
 
         --处理 events
         local info = clusterdata.info
@@ -211,6 +211,11 @@ local function watch_cluster(etcdcli, key_prefix, key_sep, clusterdata)
         clusterdata.rev = revision
 
         logger.info("watch_cluster on_data suc, clusterdata: %s", lua_util.tostring(clusterdata))
+
+        if #result.events > 0 then
+            return true
+        end
+        return false
     end
 
     local function do_watch()
@@ -224,8 +229,11 @@ local function watch_cluster(etcdcli, key_prefix, key_sep, clusterdata)
         while true do
             local data = reader()
             if data then
-                --logger.info("do_watch recv: %s", lua_util.tostring(data))
-                on_data(data)            
+                local changed = on_data(data)
+                if changed then
+                    cluster.reload(clusterdata.info)
+                    logger.info("on_data cluster reload fin, info:%s", lua_util.tostring(clusterdata.info))
+                end
             else
                 break
             end
@@ -245,10 +253,14 @@ local function watch_cluster(etcdcli, key_prefix, key_sep, clusterdata)
     return true
 end
 
-function command.hello(source, msg)
-    skynet.error("recv msg:", msg)
+--获取符合 pat 规则的服务器名字列表
+--pat : string, 正则表达式, 比如要获取所有 plazaserver, 则 "^plazaserver.*", 如果获取所有 server, 则 ".*"
+function command.names(source, pat)
+
 end
 
+--获取符合 pat 规则的服务器名字列表中一个
+--pat : string, 正则表达式, 比如要获取所有 plazaserver, 则 "^plazaserver.*", 如果获取所有 server, 则 ".*"
 function command.oneof(source, pat)
 
 end
@@ -280,23 +292,21 @@ skynet.start(function()
 		reg_self(g_etcdcli, g_servertype, g_clustercfg, k_key_sep)
 	end
 
-    --fetch and watch cluster info
-    local ok, clusterdata = skynet_util.error_retry(k_init_retry_times, k_retry_inv, fetch_cluster, g_etcdcli, k_key_prefix, k_key_sep)
+    --fetch cluster info
+    local ok, clusterdata = skynet_util.error_retry(k_init_retry_times, k_retry_inv,
+        fetch_cluster, g_etcdcli, k_key_prefix, k_key_sep)
     if ok and clusterdata then
         g_clusterdata = clusterdata
+        cluster.reload(g_clusterdata.info)
+        logger.info("fetch cluster reload fin, info:%s", lua_util.tostring(g_clusterdata.info))
     else
         error("fetch_cluster fail")
     end
 
+    --watch cluster info change
     watch_cluster(g_etcdcli, k_key_prefix, k_key_sep, g_clusterdata)
 
     skynet.register ".cluster_mgr"
-
-    --for test
-    skynet.timeout(30*100, function()
-        skynet.send(skynet.self(), "lua", "shutdown")
-    end)
-    --end test
 
     skynet.error("cluster_mgr started")
 end)
