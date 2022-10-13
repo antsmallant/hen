@@ -1,13 +1,13 @@
 include "config.common"
 
-servertype = "battleserver"
+servertype = "loginserver"
 
 logger = log_dir .. servertype .. ".log"
 daemon = run_dir .. servertype .. ".pid"
 
-start = "battle/"..servertype
+start = "login/"..servertype
 
 cluster_ip = "127.0.0.1"
-cluster_port = 8102
+cluster_port = 8104
 
-debug_port = 7102
+debug_port = 7104

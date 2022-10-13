@@ -5,9 +5,11 @@ servertype = "gatewayserver"
 logger = log_dir .. servertype .. ".log"
 daemon = run_dir .. servertype .. ".pid"
 
-start = servertype
+start = "gateway/"..servertype
 
 cluster_ip = "127.0.0.1"
 cluster_port = 8101
 
 debug_port = 7101
+
+watchdog_port = 6101

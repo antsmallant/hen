@@ -5,7 +5,7 @@ servertype = "plazaserver"
 logger = log_dir .. servertype .. ".log"
 daemon = run_dir .. servertype .. ".pid"
 
-start = servertype
+start = "plaza/"..servertype
 
 cluster_ip = "127.0.0.1"
 cluster_port = 8103

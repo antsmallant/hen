@@ -14,6 +14,7 @@ lua_path = lua_path..skynet_root.."lualib/?/init.lua;"
 lua_path = lua_path..proj_root.."src/3rd/lualib/?.lua;"
 lua_path = lua_path..proj_root.."src/lualib/?.lua;"
 lua_path = lua_path..proj_root.."src/3rd/?.lua;"
+lua_path = lua_path..proj_root.."src/service/?.lua;"
 
 lua_cpath = ""
 lua_cpath = lua_cpath..skynet_root.."luaclib/?.so;"

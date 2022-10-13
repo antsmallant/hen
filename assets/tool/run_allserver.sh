@@ -9,6 +9,6 @@ function start_server() {
 ./rm_logs.sh
 
 start_server gatewayserver
+start_server loginserver
 start_server plazaserver
 start_server battleserver
-

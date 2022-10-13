@@ -6,7 +6,7 @@ local lua_util = require "lua_util"
 local skynet_util = require "hen.skynet_util"
 local logger = require "hen.logger"
 
-local command = {}
+local CMD = {}
 local g_servertype = assert(skynet.getenv("servertype"), "invalid servertype")
 local g_clustercfg
 local g_etcdcli
@@ -255,7 +255,7 @@ end
 --获取符合 pat 规则的服务器名字列表
 --pat : string, 正则表达式, 1、nil 或 ".*" 表示获取全部的服务器名字; 2、按照正常的 lua 正则规则进行匹配
 --      比如要获取所有 plazaserver, 则 "^plazaserver.*", 如果获取所有 server, 则 nil 或 ".*"
-function command.get_names(source, pat)
+function CMD.get_names(source, pat)
 	local names = {}
     local info = g_clusterdata.info
 	if not pat or pat == ".*" then
@@ -268,20 +268,20 @@ function command.get_names(source, pat)
 	return names
 end
 
-function command.shutdown(source)
+function CMD.shutdown(source)
     logger.info("recv shutdown from: %s", source)
     local ok = unreg_self(g_etcdcli, g_servertype, g_clustercfg, k_key_sep)
     return ok
 end
 
-function command.hello(source, msg)
+function CMD.hello(source, msg)
     logger.info("recv %s from: %s", msg, source)
     return "hi"
 end
 
 skynet.start(function()
 	skynet.dispatch("lua", function(session, source, cmd, ...)
-        return skynet_util.lua_docmd(command, session, cmd, source, ...)
+        return skynet_util.lua_docmd(CMD, session, cmd, source, ...)
 	end)
 
     g_clustercfg = get_cluster_cfg()

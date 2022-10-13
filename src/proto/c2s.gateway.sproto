@@ -1,0 +1,28 @@
+.package {
+	type 0 : integer
+	session 1 : integer
+}
+
+# 简单的身份认证
+verify 1 {
+    request {
+        username 0 : string
+        pwd 1 : string
+    }
+    response {
+        err 0 : integer      # 0: ok, 1: invalid username or pwd
+        token 1 : string
+    }
+}
+
+# 中转消息到其他 server
+transfer 2 {
+    request {
+        target 0 : string    # 目标服务器
+        msg 1 : string       # encode 过的 sproto 消息
+    }
+    response {
+        err 0 : integer      # 0: ok, 1: target not found
+        msg 1 : string       # encode 过的 sproto 消息
+    }
+}
