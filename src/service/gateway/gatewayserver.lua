@@ -14,6 +14,7 @@ local max_client = tonumber(skynet.getenv "max_client" or 1000)
 skynet.start(function()
     skynet.uniqueservice("common/cluster_mgr")
     skynet.newservice("debug_console", debug_port)
+    skynet.uniqueservice("gateway/protoloader")
 
 	local watchdog = skynet.newservice("gateway/watchdog")
 	local addr,port = skynet.call(watchdog, "lua", "start", {

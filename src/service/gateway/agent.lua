@@ -11,15 +11,17 @@ local CMD = {}
 local REQUEST = {}
 local client_fd
 
+local mystore = {}
+
 function REQUEST:get()
-	print("get", self.what)
-	local r = skynet.call("SIMPLEDB", "lua", "get", self.what)
+	skynet.error("get", self.what)
+	local r = mystore[self.what]
 	return { result = r }
 end
 
 function REQUEST:set()
-	print("set", self.what, self.value)
-	local r = skynet.call("SIMPLEDB", "lua", "set", self.what, self.value)
+	skynet.error("set", self.what, self.value)
+    mystore[self.what] = self.value
 end
 
 function REQUEST:handshake()
@@ -52,7 +54,7 @@ skynet.register_protocol {
 	dispatch = function (fd, _, type, ...)
 		assert(fd == client_fd)	-- You can use fd to reply message
 		skynet.ignoreret()	-- session is fd, don't call skynet.ret
-		skynet.trace()
+		--skynet.trace()
 		if type == "REQUEST" then
 			local ok, result  = pcall(request, ...)
 			if ok then
@@ -94,7 +96,7 @@ end
 
 skynet.start(function()
 	skynet.dispatch("lua", function(_,_, command, ...)
-		skynet.trace()
+		--skynet.trace()
 		local f = CMD[command]
 		skynet.ret(skynet.pack(f(...)))
 	end)

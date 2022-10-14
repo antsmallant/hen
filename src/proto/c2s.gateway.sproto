@@ -26,3 +26,27 @@ transfer 2 {
         msg 1 : string       # encode 过的 sproto 消息
     }
 }
+
+handshake 3 {
+	response {
+		msg 0  : string
+	}
+}
+
+get 4 {
+	request {
+		what 0 : string
+	}
+	response {
+		result 0 : string
+	}
+}
+
+set 5 {
+	request {
+		what 0 : string
+		value 1 : string
+	}
+}
+
+quit 6 {}

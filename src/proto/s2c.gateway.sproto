@@ -3,3 +3,4 @@
 	session 1 : integer
 }
 
+heartbeat 1 {}

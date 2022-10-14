@@ -8,7 +8,7 @@ local agent = {}
 
 function SOCKET.open(fd, addr)
 	skynet.error("New client from : " .. addr)
-	agent[fd] = skynet.newservice("gateway_agent")
+	agent[fd] = skynet.newservice("gateway/agent")
 	skynet.call(agent[fd], "lua", "start", { gate = gate, client = fd, watchdog = skynet.self() })
 end
 
