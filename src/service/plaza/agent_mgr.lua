@@ -6,7 +6,6 @@ local CMD = {}
 
 --检查用户是否已经登录过其中某个 plazaserver
 local function chk_if_logined(uid)
-    
 end
 
 function CMD.login(uid)

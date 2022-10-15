@@ -13,6 +13,6 @@ skynet.start(function()
     skynet.uniqueservice("common/mysqld")
     skynet.uniqueservice("common/redisd")
     skynet.uniqueservice("debug_console", debug_port)
-
+    skynet.uniqueservice("plaza/protoloader")
     skynet.error(k_servertype .. " started")
 end)

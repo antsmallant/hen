@@ -6,7 +6,6 @@ package.path = package.path..skynet_dir.."lualib/?.lua;"
 package.path = package.path..proj_dir.."src/3rd/lualib/?.lua;"
 package.path = package.path..proj_dir.."src/service/?.lua;"
 
-
 if _VERSION ~= "Lua 5.4" then
 	error "Use lua 5.4"
 end
@@ -14,11 +13,17 @@ end
 local socket = require "client.socket"
 local gateway_proto = require "gateway.proto"
 local sproto = require "sproto"
+require "luaext"
 
-local gateway_host = sproto.new(gateway_proto.s2c):host "package"
-local gateway_pack = gateway_host:attach(sproto.new(gateway_proto.c2s))
 
-local fd = assert(socket.connect("127.0.0.1", 6101))
+local gw_pb_host = sproto.new(gateway_proto.s2c):host "package"
+local gw_pb_pack = gw_pb_host:attach(sproto.new(gateway_proto.c2s))
+
+local gateway_host = "127.0.0.1"
+local gateway_port = 6101
+
+
+local fd = assert(socket.connect(gateway_host, gateway_port))
 
 local function send_package(fd, pack)
 	local package = string.pack(">s2", pack)
@@ -58,7 +63,7 @@ local session = 0
 
 local function send_request(name, args)
 	session = session + 1
-	local str = gateway_pack(name, args, session)
+	local str = gw_pb_pack(name, args, session)
 	send_package(fd, str)
 	print("Request:", session)
 end
@@ -100,21 +105,53 @@ local function dispatch_package()
 			break
 		end
 
-		print_package(gateway_host:dispatch(v))
+		print_package(gw_pb_host:dispatch(v))
 	end
+end
+
+
+local REQ = {}
+
+function REQ.quit()
+    send_request("quit")
+end
+
+function REQ.get(what)
+    send_request("get", { what = what })
+end
+
+function REQ.set(what, value)
+    send_request("set", { what = what, value = value})
+end
+
+function REQ.verify(username, pwd)
+    if not (username and pwd) then
+        username = "ant"
+        pwd = "123"
+        print("verify use default username/pwd")
+    end
+    send_request("verify", {username = username, pwd = pwd})
 end
 
 send_request("handshake")
 send_request("set", { what = "hello", value = "world" })
 while true do
 	dispatch_package()
-	local cmd = socket.readstdin()
-	if cmd then
-		if cmd == "quit" then
-			send_request("quit")
-		else
-			send_request("get", { what = cmd })
-		end
+	local cmdline = socket.readstdin()
+	if cmdline then
+        local tokens = string.split(cmdline, " ")
+        print(string.format("#tokens:%s, tokens:%s", #tokens, tostring(tokens)))
+        if #tokens > 0 then
+            local req = tokens[1]
+            local f = REQ[tokens[1]]
+            if f then
+                f(table.unpack(tokens, 2))
+            else
+                print("not support req:"..req)
+            end
+        else
+            print("invalid cmdline:"..cmdline)
+        end
 	else
 		socket.usleep(100)
 	end

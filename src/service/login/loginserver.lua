@@ -14,7 +14,7 @@ skynet.start(function()
     skynet.uniqueservice("common/redisd")
     skynet.uniqueservice("debug_console", debug_port)
 
-    skynet.newservice("login/logind")
+    skynet.uniqueservice("login/logind")
 
     skynet.error(k_servertype .. " started")
 end)

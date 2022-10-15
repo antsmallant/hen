@@ -11,7 +11,7 @@ verify 1 {
     }
     response {
         err 0 : integer      # 0: ok, 1: invalid username or pwd
-        token 1 : string
+        uid 1 : integer
     }
 }
 

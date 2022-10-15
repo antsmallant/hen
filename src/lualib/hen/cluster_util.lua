@@ -51,7 +51,7 @@ function _M.timeout_call(timeout, node, address, ...)
 end
 
 skynet.init(function()
-	cluster_mgr = skynet.uniqueservice("cluster_mgr")
+	cluster_mgr = skynet.uniqueservice("common/cluster_mgr")
 end)
 
 

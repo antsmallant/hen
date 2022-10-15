@@ -2,6 +2,8 @@ local skynet = require "skynet"
 local socket = require "skynet.socket"
 local sproto = require "sproto"
 local sprotoloader = require "sprotoloader"
+local cluster_util = require "hen.cluster_util"
+local logger = require "hen.logger"
 
 local WATCHDOG
 local host
@@ -10,6 +12,8 @@ local pack_request
 local CMD = {}
 local REQUEST = {}
 local client_fd
+local g_has_verify = false
+local g_user = {}
 
 local mystore = {}
 
@@ -30,6 +34,17 @@ end
 
 function REQUEST:quit()
 	skynet.call(WATCHDOG, "lua", "close", client_fd)
+end
+
+function REQUEST:verify()
+    local ok, uid = cluster_util.call_rand_one("^loginserver.*", ".logind", "verify", self.username, self.pwd)
+    if ok and uid then
+        g_has_verify = true
+        g_user.uid = uid
+        return {err = 0, uid = uid}
+    end
+    logger.info("verify fail, err:%s", uid)
+    return {err = 1}
 end
 
 local function request(name, args, response)
