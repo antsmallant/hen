@@ -23,10 +23,10 @@ local function test_mysql()
 end
 
 local function test_redis()
-    local dbutil = require "hen.dbutil"
+    local db_util = require "hen.db_util"
     local r1 = skynet.call(".redisd", "lua", "exe", "set", "a", 100)
     logger.info("test_redis, r1:%s", lua_util.tostring(r1))
-    assert(dbutil.redisok(r1))
+    assert(db_util.redisok(r1))
     local r2 = skynet.call(".redisd", "lua", "exe", "get", "a")
     logger.info("test_redis, r2:%s", lua_util.tostring(r2))
     local r3 = skynet.call(".redisd", "lua", "exe", "mset", "a", 100, "b", 200, "c", 300)
