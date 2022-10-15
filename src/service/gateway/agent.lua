@@ -5,7 +5,7 @@ local sprotoloader = require "sprotoloader"
 
 local WATCHDOG
 local host
-local send_request
+local pack_request
 
 local CMD = {}
 local REQUEST = {}
@@ -77,10 +77,10 @@ function CMD.start(conf)
 	WATCHDOG = conf.watchdog
 	-- slot 1,2 set at main.lua
 	host = sprotoloader.load(1):host "package"
-	send_request = host:attach(sprotoloader.load(2))
+	pack_request = host:attach(sprotoloader.load(2))
 	skynet.fork(function()
 		while true do
-			send_package(send_request "heartbeat")
+			send_package(pack_request "heartbeat")
 			skynet.sleep(500)
 		end
 	end)

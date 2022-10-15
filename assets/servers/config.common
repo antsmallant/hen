@@ -26,22 +26,34 @@ cpath = cpath..proj_root.."src/cservice/?.so;"
 
 snax = ""
 
-
-etcd_hosts = "[\"127.0.0.1:2379\"]" -- json array
-etcd_user = "root"
-etcd_password = "123456"
-
+harbor = 0
 thread = 8
 logservice = "henlogger"
 logpath = "."
-harbor = 0
+loglevel = "debug"  --debug \ info \ error
 bootstrap = "snlua bootstrap"
+cluster_ttl = 10
+
 
 proj_dir = "../../../"
 assets_dir = proj_dir .. "assets/"
 run_dir = assets_dir .. "run/"
 log_dir = assets_dir .. "log/"
 
-cluster_ttl = 10
 
-loglevel = "debug"  --debug \ info \ error
+etcd_hosts = "[\"127.0.0.1:2379\"]" -- json array
+etcd_user = "root"
+etcd_password = "123456"
+
+mysql_host = "127.0.0.1"
+mysql_port = 3308
+mysql_user = "hen"
+mysql_pwd = "123456"
+mysql_dbs = "hen"   --dbnames split by ;
+mysql_poolsize = 2  --每个db的连接数
+
+redis_host = "127.0.0.1"
+redis_port = 6379
+redis_auth = "123456"
+redis_db = 0
+redis_poolsize = 2  --redis的连接数
