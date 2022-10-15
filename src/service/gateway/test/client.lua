@@ -4,8 +4,7 @@ package.cpath = skynet_dir.."luaclib/?.so"
 package.path = ""
 package.path = package.path..skynet_dir.."lualib/?.lua;"
 package.path = package.path..proj_dir.."src/3rd/lualib/?.lua;"
-package.path = package.path..proj_dir.."src/service/gateway/?.lua;"
-package.path = package.path..proj_dir.."src/service/gateway/test/?.lua;"
+package.path = package.path..proj_dir.."src/service/?.lua;"
 
 
 if _VERSION ~= "Lua 5.4" then
@@ -13,11 +12,11 @@ if _VERSION ~= "Lua 5.4" then
 end
 
 local socket = require "client.socket"
-local proto = require "proto"
+local gateway_proto = require "gateway.proto"
 local sproto = require "sproto"
 
-local host = sproto.new(proto.s2c):host "package"
-local request = host:attach(sproto.new(proto.c2s))
+local gateway_host = sproto.new(gateway_proto.s2c):host "package"
+local gateway_pack = gateway_host:attach(sproto.new(gateway_proto.c2s))
 
 local fd = assert(socket.connect("127.0.0.1", 6101))
 
@@ -59,7 +58,7 @@ local session = 0
 
 local function send_request(name, args)
 	session = session + 1
-	local str = request(name, args, session)
+	local str = gateway_pack(name, args, session)
 	send_package(fd, str)
 	print("Request:", session)
 end
@@ -101,7 +100,7 @@ local function dispatch_package()
 			break
 		end
 
-		print_package(host:dispatch(v))
+		print_package(gateway_host:dispatch(v))
 	end
 end
 
