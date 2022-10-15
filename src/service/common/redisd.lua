@@ -1,65 +1,57 @@
 local skynet = require "skynet.manager"
 local skynet_util = require "hen.skynet_util"
 local logger = require "hen.logger"
-local mysql = require "skynet.db.mysql"
+local redis = require "skynet.db.redis"
 require "luaext"
 
 local CMD = {}
 local dbpool = {}
 local dbidx = 1
 
-
 --todo: 返回真正空闲的连接，而不是这样轮流的
-local function get_conn(db)
-    assert(db)
-    local pool = dbpool[db]
-    assert(pool, db)
-
-    local idx = dbidx[db]
-    assert(idx)
-    assert(idx <= #pool)
-    local conn = pool[idx]
+local function get_conn()
+    local conn = dbpool[dbidx]
     assert(conn)
+    logger.info("redisd get_conn, dbidx:%s", dbidx)
 
-    local nextidx = idx + 1
-    if nextidx > #pool then nextidx = 1 end
-    dbidx[db] = nextidx
-
-    logger.info("get_conn, idx:%s", idx)
+    dbidx = dbidx + 1
+    if dbidx > #dbpool then dbidx = 1 end
 
     return conn
 end
 
-local function create_conn(host, port, db, user, pwd, charset)
-	local function on_connect(conn)
-		conn:query("set charset "..charset)
-	end
-	local conn=mysql.connect({
-		host=host,
-		port=port,
-		database=db,
-		user=user,
-		password=pwd,
-        charset=charset,
-		max_packet_size = 1024 * 1024,
-		on_connect = on_connect
-	})
+local function create_conn(host, port, db, auth)
+    local conn = redis.connect {
+        host = host,
+        port = port,
+        db   = db,
+        auth = auth
+    }
     return conn
 end
 
 local function init_all()
     local redis_host = assert(skynet.getenv "redis_host")
     local redis_port = assert(tonumber(skynet.getenv "redis_port"))
-    local redis_auth = assert(skynet.getenv "redis_auth")
     local redis_db = assert(tonumber(skynet.getenv "redis_db"))
+    local redis_auth = assert(skynet.getenv "redis_auth")
     local redis_poolsize = assert(tonumber(skynet.getenv("redis_poolsize")))
     assert(redis_poolsize > 0, tostring(redis_poolsize))
+
+    for i = 1, redis_poolsize do
+        local conn = create_conn(redis_host, redis_port, redis_db, redis_auth)
+        assert(conn, i)
+        table.insert(dbpool, conn)
+    end
 end
 
-function CMD.exe(script)
-    assert(script, "script not given")
+function CMD.exe(cmd, ...)
+    assert(cmd, "cmd not given")
     local conn = get_conn()
-    return conn:query(script)
+    assert(conn, cmd)
+    local f = conn[cmd]
+    assert(f, "cmd not found:" .. cmd)
+    return f(conn, ...)
 end
 
 skynet.start(function()

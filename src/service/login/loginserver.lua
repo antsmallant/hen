@@ -10,7 +10,11 @@ local debug_port = assert(tonumber(skynet.getenv "debug_port"))
 
 skynet.start(function()
     skynet.uniqueservice("common/cluster_mgr")
-    skynet.newservice("debug_console", debug_port)
+    skynet.uniqueservice("common/mysqld")
+    skynet.uniqueservice("common/redisd")
+    skynet.uniqueservice("debug_console", debug_port)
+
     skynet.newservice("login/logind")
+
     skynet.error(k_servertype .. " started")
 end)

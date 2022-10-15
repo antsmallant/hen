@@ -22,21 +22,33 @@ local function test_mysql()
     end
 end
 
+local function test_redis()
+    local dbutil = require "hen.dbutil"
+    local r1 = skynet.call(".redisd", "lua", "exe", "set", "a", 100)
+    logger.info("test_redis, r1:%s", lua_util.tostring(r1))
+    assert(dbutil.redisok(r1))
+    local r2 = skynet.call(".redisd", "lua", "exe", "get", "a")
+    logger.info("test_redis, r2:%s", lua_util.tostring(r2))
+    local r3 = skynet.call(".redisd", "lua", "exe", "mset", "a", 100, "b", 200, "c", 300)
+    logger.info("test_redis, r3:%s", lua_util.tostring(r3))
+    local r4 = skynet.call(".redisd", "lua", "exe", "mget", "a", "b", "c")
+    logger.info("test_redis, r4:%s", lua_util.tostring(r4))
+end
+
 skynet.start(function()
     skynet.uniqueservice("common/cluster_mgr")
-    skynet.newservice("debug_console", debug_port)
-    skynet.uniqueservice("gateway/protoloader")
     skynet.uniqueservice("common/mysqld")
+    skynet.uniqueservice("common/redisd")
+    skynet.uniqueservice("debug_console", debug_port)
 
-	local watchdog = skynet.newservice("gateway/watchdog")
+    skynet.uniqueservice("gateway/protoloader")
+	local watchdog = skynet.uniqueservice("gateway/watchdog")
 	local addr,port = skynet.call(watchdog, "lua", "start", {
 		port = watchdog_port,
 		maxclient = max_client,
 		nodelay = true,
 	})
 	logger.info("watchdog listen on %s:%s", addr, port)
-
-    skynet.fork(test_mysql)
 
     logger.info(k_servertype .. " started")
 end)

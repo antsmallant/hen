@@ -24,12 +24,11 @@ local function get_conn(db)
     assert(idx <= #pool)
     local conn = pool[idx]
     assert(conn)
+    logger.info("mysqld get_conn, idx:%s", idx)
 
     local nextidx = idx + 1
     if nextidx > #pool then nextidx = 1 end
     dbidx[db] = nextidx
-
-    logger.info("get_conn, idx:%s", idx)
 
     return conn
 end

@@ -54,6 +54,6 @@ mysql_poolsize = 2  --每个db的连接数
 
 redis_host = "127.0.0.1"
 redis_port = 6379
-redis_auth = "123456"
 redis_db = 0
+redis_auth = "123456"
 redis_poolsize = 2  --redis的连接数
