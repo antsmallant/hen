@@ -279,6 +279,11 @@ function CMD.hello(source, msg)
     return "hi"
 end
 
+function CMD.get_cluster_id(source)
+    local cluster_id = gen_cluster_kv(g_servertype, g_clustercfg, "")
+    return cluster_id
+end
+
 skynet.start(function()
 	skynet.dispatch("lua", function(session, source, cmd, ...)
         return skynet_util.lua_docmd(CMD, session, cmd, source, ...)

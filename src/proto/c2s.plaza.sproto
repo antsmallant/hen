@@ -2,3 +2,41 @@
 	type 0 : integer
 	session 1 : integer
 }
+
+.game {
+    name 0 : string
+}
+
+# 获取游戏列表
+get_game_list 1 {
+    request {
+    }
+    response {
+        games 0 : *game
+    }
+}
+
+.room {
+    name 0 : string
+}
+
+# 获取指定游戏的房间列表
+get_room_list 2 {
+    request {
+        game_name 0 : string
+    }
+    response {
+        rooms 0 : *room
+    }
+}
+
+# 加入房间游戏
+join_game 3 {
+    request {
+        room_name 0 : string
+    }
+    response {
+        battle_svr 0 : string
+        battle_entity_id 1 : string
+    }
+}

@@ -1,0 +1,13 @@
+.package {
+	type 0 : integer
+	session 1 : integer
+}
+
+chat_msg 1 {
+    request {
+        msg 0 : string
+    }
+    response {
+        err 0 : integer
+    }
+}

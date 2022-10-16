@@ -4,3 +4,12 @@
 }
 
 heartbeat 1 {}
+
+# 中转其他服务器的消息
+redirect_msg 2 {
+    request {
+        svrname 0 : string
+        svrtype 1 : string
+        package 2 : string
+    }
+}

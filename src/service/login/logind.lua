@@ -31,6 +31,7 @@ local function create_user(username, uid)
     return true
 end
 
+--简单的用户认证(只用于简单示例)
 function CMD.verify(username, pwd)
     assert(username)
     assert(pwd)

@@ -15,38 +15,14 @@ verify 1 {
     }
 }
 
-# 中转消息到其他 server
+# 中转消息到其他服务器
 transfer 2 {
     request {
-        target 0 : string    # 目标服务器
-        msg 1 : string       # encode 过的 sproto 消息
+        svrname 0 : string   # 服务器名(当svrtype为plazaserver的时候可以不给出)
+        svrtype 1 : string   # 服务器类型
+        package 2 : string   # encode 过的 sproto 消息
     }
     response {
         err 0 : integer      # 0: ok, 1: target not found
-        msg 1 : string       # encode 过的 sproto 消息
     }
 }
-
-handshake 3 {
-	response {
-		msg 0  : string
-	}
-}
-
-get 4 {
-	request {
-		what 0 : string
-	}
-	response {
-		result 0 : string
-	}
-}
-
-set 5 {
-	request {
-		what 0 : string
-		value 1 : string
-	}
-}
-
-quit 6 {}

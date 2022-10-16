@@ -50,6 +50,13 @@ end
 function _M.timeout_call(timeout, node, address, ...)
 end
 
+local g_cluster_id
+function _M.get_cluster_id()
+    if g_cluster_id then return g_cluster_id end
+    g_cluster_id = skynet.call(cluster_mgr, "lua", "get_cluster_id")
+    return g_cluster_id
+end
+
 skynet.init(function()
 	cluster_mgr = skynet.uniqueservice("common/cluster_mgr")
 end)

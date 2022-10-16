@@ -12,6 +12,7 @@ end
 
 local socket = require "client.socket"
 local gateway_proto = require "gateway.proto"
+local plaza_proto = require "plaza.proto"
 local sproto = require "sproto"
 require "luaext"
 
@@ -19,9 +20,11 @@ require "luaext"
 local gw_pb_host = sproto.new(gateway_proto.s2c):host "package"
 local gw_pb_pack = gw_pb_host:attach(sproto.new(gateway_proto.c2s))
 
+local plaza_pb_host = sproto.new(plaza_proto.s2c):host "package"
+local plaza_pb_pack = plaza_pb_host:attach(sproto.new(plaza_proto.c2s))
+
 local gateway_host = "127.0.0.1"
 local gateway_port = 6101
-
 
 local fd = assert(socket.connect(gateway_host, gateway_port))
 
@@ -59,13 +62,20 @@ local function recv_package(last)
 	return unpack_package(last .. r)
 end
 
-local session = 0
+local gw_session = 0
+local plaza_session = 0
 
 local function send_request(name, args)
-	session = session + 1
-	local str = gw_pb_pack(name, args, session)
+	gw_session = gw_session + 1
+	local str = gw_pb_pack(name, args, gw_session)
 	send_package(fd, str)
-	print("Request:", session)
+	print("Request:", gw_session)
+end
+
+local function pack_plaza_request(name, args)
+    plaza_session = plaza_session + 1
+	local str = plaza_pb_pack(name, args, plaza_session)
+    return str
 end
 
 local last = ""
@@ -112,18 +122,6 @@ end
 
 local REQ = {}
 
-function REQ.quit()
-    send_request("quit")
-end
-
-function REQ.get(what)
-    send_request("get", { what = what })
-end
-
-function REQ.set(what, value)
-    send_request("set", { what = what, value = value})
-end
-
 function REQ.verify(username, pwd)
     if not (username and pwd) then
         username = "ant"
@@ -133,8 +131,20 @@ function REQ.verify(username, pwd)
     send_request("verify", {username = username, pwd = pwd})
 end
 
-send_request("handshake")
-send_request("set", { what = "hello", value = "world" })
+function REQ.get_game_list()
+    local msg = {
+        svrtype = "plazaserver",
+        package = pack_plaza_request("get_game_list", {})
+    }
+    send_request("transfer", msg)
+end
+REQ.ggl = REQ.get_game_list
+
+local auto_verify = true
+if auto_verify then
+    REQ.verify("ant", "123")
+end
+
 while true do
 	dispatch_package()
 	local cmdline = socket.readstdin()

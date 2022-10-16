@@ -2,32 +2,25 @@ local skynet = require "skynet"
 local socket = require "skynet.socket"
 local sproto = require "sproto"
 local sprotoloader = require "sprotoloader"
+local cluster_util = require "hen.cluster_util"
+local skynet_util = require "hen.skynet_util"
 
-local WATCHDOG
-local host
-local send_request
 
 local CMD = {}
 local REQUEST = {}
 local client_fd
 
-function REQUEST:get()
-	print("get", self.what)
-	local r = skynet.call("SIMPLEDB", "lua", "get", self.what)
-	return { result = r }
-end
+local k_servertype = assert(skynet.getenv "servertype")
+local host
+local pack_request
+local g_gatewaysvr
+local g_gateway_agent
+local g_uid
 
-function REQUEST:set()
-	print("set", self.what, self.value)
-	local r = skynet.call("SIMPLEDB", "lua", "set", self.what, self.value)
-end
-
-function REQUEST:handshake()
-	return { msg = "Welcome to skynet, I will send heartbeat every 5 sec." }
-end
-
-function REQUEST:quit()
-	skynet.call(WATCHDOG, "lua", "close", client_fd)
+function REQUEST:get_game_list()
+    return {
+        {name = "chatting"}
+    }
 end
 
 local function request(name, args, response)
@@ -40,51 +33,34 @@ end
 
 local function send_package(pack)
 	local package = string.pack(">s2", pack)
-	socket.write(client_fd, package)
+    local cluster_id = cluster_util.get_cluster_id()
+    cluster_util.send(g_gatewaysvr, g_gateway_agent,
+        "redirect_msg", cluster_id, k_servertype, package)
 end
 
-skynet.register_protocol {
-	name = "client",
-	id = skynet.PTYPE_CLIENT,
-	unpack = function (msg, sz)
-		return host:dispatch(msg, sz)
-	end,
-	dispatch = function (fd, _, type, ...)
-		assert(fd == client_fd)	-- You can use fd to reply message
-		skynet.ignoreret()	-- session is fd, don't call skynet.ret
-		skynet.trace()
-		if type == "REQUEST" then
-			local ok, result  = pcall(request, ...)
-			if ok then
-				if result then
-					send_package(result)
-				end
-			else
-				skynet.error(result)
-			end
-		else
-			assert(type == "RESPONSE")
-			error "This example doesn't support request client"
-		end
-	end
-}
-
 function CMD.start(conf)
-	local fd = conf.client
-	local gate = conf.gate
-	WATCHDOG = conf.watchdog
+	g_gatewaysvr = conf.gatewaysvr
+    g_gateway_agent = conf.gateway_agent
+	g_uid = conf.uid
+
 	-- slot 1,2 set at main.lua
 	host = sprotoloader.load(1):host "package"
-	send_request = host:attach(sprotoloader.load(2))
-	skynet.fork(function()
-		while true do
-			send_package(send_request "heartbeat")
-			skynet.sleep(500)
-		end
-	end)
+	pack_request = host:attach(sprotoloader.load(2))
+end
 
-	client_fd = fd
-	skynet.call(gate, "lua", "forward", fd)
+function CMD.client_msg(msg)
+    local type, protoname, result, resp = host:dispatch(msg, #msg)
+    if type ~= "REQUEST" then
+        error("not support type:"..type)
+    end
+    local ok, result = pcall(request, protoname, result, resp)
+    if ok then
+        if result then
+            send_package(result)
+        end
+    else
+        skynet.error(result)
+    end
 end
 
 function CMD.disconnect()
@@ -93,9 +69,7 @@ function CMD.disconnect()
 end
 
 skynet.start(function()
-	skynet.dispatch("lua", function(_,_, command, ...)
-		skynet.trace()
-		local f = CMD[command]
-		skynet.ret(skynet.pack(f(...)))
+	skynet.dispatch("lua", function(session, source, cmd, ...)
+        return skynet_util.lua_docmd(CMD, session, cmd, ...)
 	end)
 end)

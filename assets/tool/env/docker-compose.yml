@@ -1,0 +1,21 @@
+version: '3'
+services:
+  mysql:
+    image: mysql:5.7-debian
+    ports:
+      - 3308:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+  redis:
+    image: redis:7.0
+    command: redis-server --requirepass 123456
+    ports:
+      - 6379:6379
+  etcd:
+    image: 'bitnami/etcd:3.5.5'
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+    ports:
+      - 2379:2379
+      - 2380:2380
