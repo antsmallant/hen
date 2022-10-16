@@ -80,6 +80,17 @@ end
 
 local last = ""
 
+local request_handler = {}
+
+function request_handler.redirect_msg(args)
+    local svrtype = args.svrtype
+    assert(svrtype)
+    if svrtype == "plazaserver" then
+        local req, name, result = plaza_pb_host:dispatch(args.package)
+        print("redirect_msg:", req, name, tostring(result))
+    end
+end
+
 local function print_request(name, args)
 	if name ~= "heartbeat" then print("REQUEST", name) end
 	if args then
@@ -87,6 +98,10 @@ local function print_request(name, args)
 			print(k,v)
 		end
 	end
+    local f = request_handler[name]
+    if f then
+        f(args)
+    end
 end
 
 local function print_response(session, args)

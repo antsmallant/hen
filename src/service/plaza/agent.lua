@@ -19,7 +19,7 @@ local g_uid
 
 function REQUEST:get_game_list()
     return {
-        {name = "chatting"}
+        games = {{name = "chatting"}}
     }
 end
 
@@ -32,10 +32,9 @@ local function request(name, args, response)
 end
 
 local function send_package(pack)
-	local package = string.pack(">s2", pack)
     local cluster_id = cluster_util.get_cluster_id()
     cluster_util.send(g_gatewaysvr, g_gateway_agent,
-        "redirect_msg", cluster_id, k_servertype, package)
+        "redirect_msg", cluster_id, k_servertype, pack)
 end
 
 function CMD.start(conf)
