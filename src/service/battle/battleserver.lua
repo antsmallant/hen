@@ -13,6 +13,9 @@ skynet.start(function()
     skynet.uniqueservice("common/mysqld")
     skynet.uniqueservice("common/redisd")
     skynet.uniqueservice("debug_console", debug_port)
+    skynet.uniqueservice("battle/battle_master")
+    skynet.uniqueservice("battle/entity_mgr")
+
 
     skynet.error(k_servertype .. " started")
 end)

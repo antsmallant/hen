@@ -2,10 +2,11 @@ local skynet = require "skynet"
 require "skynet.manager"
 local cluster = require "skynet.cluster"
 local json = require "cjson.safe"
-local etcd_v3api = require "etcd.etcd_v3api"
 local lua_util = require "lua_util"
 local skynet_util = require "hen.skynet_util"
 local logger = require "hen.logger"
+local etcd_util = require "hen.etcd_util"
+
 
 local CMD = {}
 local g_servertype = assert(skynet.getenv("servertype"), "invalid servertype")
@@ -34,27 +35,6 @@ local function get_cluster_cfg()
         cfg.listenip = skynet.getenv("cluster_listenip") or "0.0.0.0" --用于 listen 的 ip 可能会与 cluster_ip 一致，所以支持单独配置
     end
     return cfg
-end
-
-local function get_etcd_cfg()
-    local hosts = json.decode(skynet.getenv "etcd_hosts")
-    local user = skynet.getenv "etcd_user"
-    local password = skynet.getenv "etcd_password"
-    assert(hosts, [[invalid etcd_hosts, check config please, config should looks like etcd_hosts = "[\"127.0.0.1:2379\"]"]])
-
-    return {
-        hosts = hosts,
-        user = user,
-        password = password,
-        serializer = "raw",
-    }
-end
-
-local function create_etcdcli(key_prefix)
-    local cfg = get_etcd_cfg()
-    cfg.key_prefix = key_prefix
-    local etcdcli = etcd_v3api.new(cfg)
-    return etcdcli
 end
 
 --return cluster_id, cluster_value
@@ -253,6 +233,15 @@ local function watch_cluster(etcdcli, key_prefix, key_sep, clusterdata)
     return true
 end
 
+--获取所有 master 节点
+local function fetch_master()
+
+end
+
+--监听 master 节点
+local function watch_master()
+end
+
 --获取符合 pat 规则的服务器名字列表
 --pat : string, 正则表达式, 1、nil 或 ".*" 表示获取全部的服务器名字; 2、按照正常的 lua 正则规则进行匹配
 --      比如要获取所有 plazaserver, 则 "^plazaserver.*", 如果获取所有 server, 则 nil 或 ".*"
@@ -293,7 +282,7 @@ skynet.start(function()
     g_clustercfg = get_cluster_cfg()
 
     --create etcd client
-    g_etcdcli = create_etcdcli(k_key_prefix)
+    g_etcdcli = etcd_util.create_etcdcli(k_key_prefix)
     if not g_etcdcli then
         error("create etcd conn fail")
     end
