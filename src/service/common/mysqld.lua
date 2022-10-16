@@ -1,4 +1,5 @@
-local skynet = require "skynet.manager"
+local skynet = require "skynet"
+require "skynet.manager"
 local skynet_util = require "hen.skynet_util"
 local logger = require "hen.logger"
 local mysql = require "skynet.db.mysql"

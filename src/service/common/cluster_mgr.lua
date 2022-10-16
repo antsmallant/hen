@@ -1,4 +1,5 @@
-local skynet = require "skynet.manager"
+local skynet = require "skynet"
+require "skynet.manager"
 local cluster = require "skynet.cluster"
 local json = require "cjson.safe"
 local etcd_v3api = require "etcd.etcd_v3api"

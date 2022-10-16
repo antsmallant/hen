@@ -135,6 +135,8 @@ local function dispatch_package()
 	end
 end
 
+
+
 function CMD.verify(username, pwd)
     if not (username and pwd) then
         username = "ant"
@@ -152,6 +154,9 @@ function CMD.get_game_list()
     send_gw_request("transfer", msg)
 end
 CMD.ggl = CMD.get_game_list
+
+
+
 
 local auto_verify = true
 if auto_verify then
