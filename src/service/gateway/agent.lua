@@ -71,21 +71,23 @@ function REQUEST:verify()
         g_has_verify = true
         g_user.uid = uid
         skynet.fork(on_verify_suc)
-        return {err = 0, uid = uid}
+        return {err = errors.ok, uid = uid}
     end
     logger.info("verify fail, err:%s", uid)
-    return {err = 1}
+    return {err = errors.invalid_user_or_pwd}
 end
 
 function REQUEST:transfer()
     assert(self.svrtype)
     if self.svrtype == "plazaserver" then
         if not g_user.plazasvr then
-            return {err = errors.target_not_found}
+            return {err = errors.not_login_yet}
         end
         cluster_util.send(g_user.plazasvr, g_user.plazaagent, "client_msg", self.package)
+        return {err = errors.ok}
     else
         assert(false, "not support yet:"..self.svrtype)
+        return {err = errors.target_not_found}
     end
 end
 
@@ -112,15 +114,12 @@ skynet.register_protocol {
 	dispatch = function (fd, _, type, ...)
 		assert(fd == client_fd)	-- You can use fd to reply message
 		skynet.ignoreret()	-- session is fd, don't call skynet.ret
-		--skynet.trace()
 		if type == "REQUEST" then
-			local ok, result  = pcall(request, ...)
+			local ok, result  = xpcall(request, skynet_util.handle_err, ...)
 			if ok then
 				if result then
 					send_package(result)
 				end
-			else
-				skynet.error(result)
 			end
 		else
 			assert(type == "RESPONSE")
@@ -149,7 +148,11 @@ end
 
 function CMD.disconnect()
 	-- todo: do something before exit
-    logger.info("user disconnect, uid:%s", g_user.uid)
+    logger.info("disconnect, uid:%s", g_user.uid)
+    if g_user.plazasvr then
+        cluster_util.send(g_user.plazasvr, ".agent_mgr", "logout",
+            cluster_util.get_cluster_id(), g_user.uid)
+    end
 	skynet.exit()
 end
 

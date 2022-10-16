@@ -10,7 +10,7 @@ verify 1 {
         pwd 1 : string
     }
     response {
-        err 0 : integer      # 0: ok, 1: invalid username or pwd
+        err 0 : integer      # 0: ok
         uid 1 : integer
     }
 }
@@ -23,6 +23,6 @@ transfer 2 {
         package 2 : string   # encode 过的 sproto 消息
     }
     response {
-        err 0 : integer      # 0: ok, 1: target not found
+        err 0 : integer      # 0: ok
     }
 }

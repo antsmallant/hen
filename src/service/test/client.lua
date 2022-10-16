@@ -23,17 +23,25 @@ local gw_pb_pack = gw_pb_host:attach(sproto.new(gateway_proto.c2s))
 local plaza_pb_host = sproto.new(plaza_proto.s2c):host "package"
 local plaza_pb_pack = plaza_pb_host:attach(sproto.new(plaza_proto.c2s))
 
+local gw_session = 0
+local plaza_session = 0
+local request_handler = {}
+local CMD = {}
+
+
 local gateway_host = "127.0.0.1"
 local gateway_port = 6101
 
+local last = ""
+
 local fd = assert(socket.connect(gateway_host, gateway_port))
 
-local function send_package(fd, pack)
+local function send_gw_package(fd, pack)
 	local package = string.pack(">s2", pack)
 	socket.send(fd, package)
 end
 
-local function unpack_package(text)
+local function unpack_gw_package(text)
 	local size = #text
 	if size < 2 then
 		return nil, text
@@ -48,7 +56,7 @@ end
 
 local function recv_package(last)
 	local result
-	result, last = unpack_package(last)
+	result, last = unpack_gw_package(last)
 	if result then
 		return result, last
 	end
@@ -59,16 +67,13 @@ local function recv_package(last)
 	if r == "" then
 		error "Server closed"
 	end
-	return unpack_package(last .. r)
+	return unpack_gw_package(last .. r)
 end
 
-local gw_session = 0
-local plaza_session = 0
-
-local function send_request(name, args)
+local function send_gw_request(name, args)
 	gw_session = gw_session + 1
 	local str = gw_pb_pack(name, args, gw_session)
-	send_package(fd, str)
+	send_gw_package(fd, str)
 	print("Request:", gw_session)
 end
 
@@ -77,10 +82,6 @@ local function pack_plaza_request(name, args)
 	local str = plaza_pb_pack(name, args, plaza_session)
     return str
 end
-
-local last = ""
-
-local request_handler = {}
 
 function request_handler.redirect_msg(args)
     local svrtype = args.svrtype
@@ -134,30 +135,27 @@ local function dispatch_package()
 	end
 end
 
-
-local REQ = {}
-
-function REQ.verify(username, pwd)
+function CMD.verify(username, pwd)
     if not (username and pwd) then
         username = "ant"
         pwd = "123"
         print("verify use default username/pwd")
     end
-    send_request("verify", {username = username, pwd = pwd})
+    send_gw_request("verify", {username = username, pwd = pwd})
 end
 
-function REQ.get_game_list()
+function CMD.get_game_list()
     local msg = {
         svrtype = "plazaserver",
         package = pack_plaza_request("get_game_list", {})
     }
-    send_request("transfer", msg)
+    send_gw_request("transfer", msg)
 end
-REQ.ggl = REQ.get_game_list
+CMD.ggl = CMD.get_game_list
 
 local auto_verify = true
 if auto_verify then
-    REQ.verify("ant", "123")
+    CMD.verify("ant", "123")
 end
 
 while true do
@@ -165,14 +163,13 @@ while true do
 	local cmdline = socket.readstdin()
 	if cmdline then
         local tokens = string.split(cmdline, " ")
-        print(string.format("#tokens:%s, tokens:%s", #tokens, tostring(tokens)))
         if #tokens > 0 then
-            local req = tokens[1]
-            local f = REQ[tokens[1]]
+            local cmd = tokens[1]
+            local f = CMD[cmd]
             if f then
                 f(table.unpack(tokens, 2))
             else
-                print("not support req:"..req)
+                print("not support cmd:"..cmd)
             end
         else
             print("invalid cmdline:"..cmdline)

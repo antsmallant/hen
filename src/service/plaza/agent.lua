@@ -4,7 +4,7 @@ local sproto = require "sproto"
 local sprotoloader = require "sprotoloader"
 local cluster_util = require "hen.cluster_util"
 local skynet_util = require "hen.skynet_util"
-
+local logger = require "hen.logger"
 
 local CMD = {}
 local REQUEST = {}
@@ -63,7 +63,7 @@ function CMD.client_msg(msg)
 end
 
 function CMD.disconnect()
-	-- todo: do something before exit
+    logger.info("user disconnect:"..g_uid)
 	skynet.exit()
 end
 

@@ -50,6 +50,22 @@ function CMD.login(gatewaysvr, gateway_agent, uid)
     return {err = errors.ok, agent = agent}
 end
 
+function CMD.logout(gatewaysvr, uid)
+    local user = g_users[uid]
+    if user then
+        if user.gatewaysvr == gatewaysvr then
+            logger.info("user logout:%s", uid)
+            skynet.send(user.agent, "lua", "disconnect")
+            g_users[uid] = nil
+        else
+            logger.info("logout gateway not match, mine:%s, theirs:%s",
+                user.gatewaysvr, gatewaysvr)
+        end
+    else
+        logger.info("user logout not found user: %s", uid)
+    end
+end
+
 skynet.start(function()
 	skynet.dispatch("lua", function(session, source, cmd, ...)
         return skynet_util.lua_docmd(CMD, session, cmd, ...)
