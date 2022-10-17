@@ -33,6 +33,7 @@ logpath = "."
 loglevel = "debug"  --debug \ info \ error
 bootstrap = "snlua bootstrap"
 cluster_ttl = 10
+master_ttl = 15
 
 
 proj_dir = "../../../"

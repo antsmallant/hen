@@ -754,7 +754,7 @@ end
 --[[
     set key-val if key does not exists (atomic create)
 ]]
-function mt:setnx(key, val, opts)
+function mt:setnx(key, val, lease, opts)
     if not verify_key(key) then
         Log.error("key invalid")
         return false
@@ -780,6 +780,7 @@ function mt:setnx(key, val, opts)
     end
 
     success[1].requestPut.value = val
+    success[1].requestPut.lease = lease
 
     return self:_txn(opts, compare, success, nil)
 end
@@ -787,7 +788,7 @@ end
 --[[
     set key-val and ttl if key is exists (update)
 ]]
-function mt:setx(key, val, opts)
+function mt:setx(key, val, lease, opts)
     if not verify_key(key) then
         Log.error("key invalid")
         return false
@@ -812,7 +813,8 @@ function mt:setx(key, val, opts)
         return false
     end
     failure[1].requestPut.value = val
-
+    failure[1].requestPut.lease = lease
+    
     return self:_txn(opts, compare, nil, failure)
 end
 
