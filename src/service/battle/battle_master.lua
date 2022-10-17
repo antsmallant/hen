@@ -5,18 +5,30 @@ local skynet_util = require "hen.skynet_util"
 local logger = require "hen.logger"
 local master_util = require "hen.master_util"
 local cluster_util = require "hen.cluster_util"
+require "skynet.queue"
 
 local CMD = {}
 local g_master
 local master_handler = {}
 local k_servertype = assert(skynet.getenv "servertype")
+local hq = skynet.queue()
 
-function master_handler.become()
+local function on_become()
     logger.info("become master")
 end
 
-function master_handler.retire()
+local function on_retire()
     logger.info("retire master")
+end
+
+function master_handler.become()
+    --使用队列, 防止同时运行 master_handler 的函数
+    return hq(on_become)
+end
+
+function master_handler.retire()
+    --使用队列, 防止同时运行 master_handler 的函数
+    return hq(on_retire)
 end
 
 skynet.start(function()
