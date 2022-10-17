@@ -752,6 +752,40 @@ function mt:set(key, val, opts)
 end
 
 --[[
+    set key-val if valueof(key) == val
+]]
+function mt:seteq(key, val, lease, opts)
+    if not verify_key(key) then
+        Log.error("key invalid")
+        return false
+    end
+
+    key = get_real_key(self.key_prefix, key)
+    key = encode_base64(key)
+
+    val = serialize_and_encode_base64(self.serializer.serialize, val)
+    if not val then
+        Log.error("seteq value invalid")
+        return false
+    end
+
+    local compare = {}
+    compare[1] = {}
+    compare[1].target = "VALUE"
+    compare[1].key = key
+    compare[1].value = val
+
+    local success = {}
+    success[1] = {}
+    success[1].requestPut = {}
+    success[1].requestPut.key = key
+    success[1].requestPut.value = val
+    success[1].requestPut.lease = lease
+
+    return self:_txn(opts, compare, success, nil)
+end
+
+--[[
     set key-val if key does not exists (atomic create)
 ]]
 function mt:setnx(key, val, lease, opts)

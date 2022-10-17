@@ -24,6 +24,9 @@ function _mt:run()
     end
     self.etcdcli = etcdcli
 
+    local function on_fail(lease)
+
+    end
 
     local function master_keepalive()
         assert(self.is_master)
@@ -34,13 +37,14 @@ function _mt:run()
         if res and res.result and res.result.TTL then
             logger.info("master_keepalive suc, lease:%s, TTL:%s",
                 self.lease, res.result.TTL)
-            return res.result.TTL
+            return true
         else
             logger.info("master_keepalive fail, lease:%s, res:%s",
                 self.lease, tostring(res))
             self.is_master = false
             self.lease = nil
-            skynet.fork(self.handler.retire)
+            self.handler.retire()
+            return false
         end
     end
 
@@ -48,28 +52,47 @@ function _mt:run()
         local grantres = etcdcli:grant(k_master_ttl)
         local lease = grantres and grantres.ID
         if not lease then
-            error(string.format("try_2_be_master fail get nil lease, grantres:%s",
+            error(string.format("try_2_be_master fail, get nil lease, grantres:%s",
                 tostring(grantres)))
         end
-        local opts = {}
+
         local etcd_key = k_key_sep..self.master_key
         local etcd_val = self.master_val
-        local setres = etcdcli:setnx(etcd_key, etcd_val, lease, opts)
-        logger.info("try_2_be_master, lease:%s, setres: %s", lease, tostring(setres))
-        if setres and setres.succeeded == true then
-            logger.info("become master")
+
+        --尝试键不存在的情况
+        local nxres = etcdcli:setnx(etcd_key, etcd_val, lease, {})
+        logger.info("try_2_be_master setnx, lease:%s, nxres: %s", lease, tostring(nxres))
+        if nxres and nxres.succeeded == true then
+            logger.info("try_2_be_master setnx success")
             self.is_master = true
             self.lease = lease
-            skynet.fork(self.handler.become)
+            self.handler.become()
+            return
         end
+
+        --尝试键与自己相等的情况
+        local eqres = etcdcli:seteq(etcd_key, etcd_val, lease, {})
+        logger.info("try_2_be_master seteq, lease:%s, eqres: %s", lease, tostring(eqres))
+        if eqres and eqres.succeeded == true then
+            logger.info("try_2_be_master seteq success")
+            self.is_master = true
+            self.lease = lease
+            self.handler.become()
+            return
+        end
+
+        --最终失败
+        --删除 lease
+        etcdcli:revoke(lease)
     end
 
     local function cycle()
         if self.is_master then
-            master_keepalive()
-        else
-            try_2_be_master()
+            local suc = master_keepalive()
+            if suc then return end
         end
+
+        try_2_be_master()
     end
 
     skynet.fork(function()
