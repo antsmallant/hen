@@ -9,7 +9,7 @@ _M.send = cluster.send
 _M.call = cluster.call
 
 local function get_names(pat)
-    return skynet.call(cluster_mgr, "lua", "get_names", pat)
+    return skynet.call(cluster_mgr, "lua", "cluster_get_names", pat)
 end
 _M.get_names = get_names
 
