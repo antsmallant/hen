@@ -16,27 +16,14 @@ get_game_list 1 {
     }
 }
 
-.room {
-    name 0 : string
-}
-
-# 获取指定游戏的房间列表
-get_room_list 2 {
+# 特定游戏消息, 由特定游戏模块去处理
+game_msg 2 {
     request {
-        game_name 0 : string
+        game 0 : string
+        msg 1 : string
     }
     response {
-        rooms 0 : *room
-    }
-}
-
-# 加入房间游戏
-join_game 3 {
-    request {
-        room_name 0 : string
-    }
-    response {
-        battle_svr 0 : string
-        battle_entity_id 1 : string
+        err 0 : integer  # 0:ok
+        msg 1 : string
     }
 }

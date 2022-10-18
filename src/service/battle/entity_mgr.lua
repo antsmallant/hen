@@ -6,6 +6,12 @@ local logger = require "hen.logger"
 
 local CMD = {}
 
+local entities = {}
+
+function CMD.create_entity()
+
+end
+
 skynet.start(function()
 	skynet.dispatch("lua", function(session, source, cmd, ...)
         return skynet_util.lua_docmd(CMD, session, cmd, ...)

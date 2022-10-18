@@ -157,8 +157,8 @@ function CMD.disconnect()
 end
 
 --转发其他服务器的消息给客户端
-function CMD.redirect_msg(svrname, svrtype, package)
-    local pack = pack_request("redirect_msg", {
+function CMD.server_msg(svrname, svrtype, package)
+    local pack = pack_request("server_msg", {
         svrname = svrname,
         svrtype = svrtype,
         package = package,

@@ -4,9 +4,10 @@ local mysql = require "skynet.db.mysql"
 local logger = require "hen.logger"
 local skynet_util = require "hen.skynet_util"
 require "luaext"
+local dbname = require "common.dbname"
 
 local CMD = {}
-local k_gamedb = "hen"
+local k_gamedb = assert(dbname.gamedb)
 
 local function get_uid(username)
     local sql = string.format("select * from users where username = %s", mysql.quote_sql_str(username))

@@ -1,0 +1,37 @@
+.package {
+	type 0 : integer
+	session 1 : integer
+}
+
+########################
+# plaza msg 1 ~ 200
+########################
+
+join_chatting 1 {
+    request {
+        group_id 0 : integer   # if nil, will random join one 
+    }
+    response {
+        err 0 : integer        # 0:ok,
+        group_id 1 : integer
+        battle_svr 2 : string  
+    }
+}
+
+
+
+
+
+########################
+# battle msg 201 ~ 1000
+########################
+
+chat 201 {
+    request {
+        group_id 0 : integer
+        msg 1 : string
+    }
+    response {
+        err 0 : integer # 0:ok,
+    }
+}

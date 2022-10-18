@@ -4,6 +4,7 @@ local _M = {
     target_not_found = 2,
     invalid_user_or_pwd = 3,
     not_login_yet = 4,
+    game_msg_err = 5,
 }
 
 

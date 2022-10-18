@@ -20,8 +20,8 @@ require "luaext"
 local gw_pb_host = sproto.new(gateway_proto.s2c):host "package"
 local gw_pb_pack = gw_pb_host:attach(sproto.new(gateway_proto.c2s))
 
-local plaza_pb_host = sproto.new(plaza_proto.s2c):host "package"
-local plaza_pb_pack = plaza_pb_host:attach(sproto.new(plaza_proto.c2s))
+local plaza_pb_host = sproto.new(plaza_proto.s2c_plaza):host "package"
+local plaza_pb_pack = plaza_pb_host:attach(sproto.new(plaza_proto.c2s_plaza))
 
 local gw_session = 0
 local plaza_session = 0
@@ -83,12 +83,12 @@ local function pack_plaza_request(name, args)
     return str
 end
 
-function request_handler.redirect_msg(args)
+function request_handler.server_msg(args)
     local svrtype = args.svrtype
     assert(svrtype)
     if svrtype == "plazaserver" then
         local req, name, result = plaza_pb_host:dispatch(args.package)
-        print("redirect_msg:", req, name, tostring(result))
+        print("server_msg:", req, name, tostring(result))
     end
 end
 

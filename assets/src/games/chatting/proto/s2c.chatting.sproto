@@ -1,0 +1,24 @@
+.package {
+	type 0 : integer
+	session 1 : integer
+}
+
+
+########################
+# plaza msg 1 ~ 200
+########################
+
+
+
+
+########################
+# battle msg 201 ~ 1000
+########################
+
+chat_msg 201 {
+    request {
+        group_id 0 : integer
+        username 1 : string
+        msg 2 : string
+    }
+}

@@ -15,6 +15,7 @@ lua_path = lua_path..proj_root.."src/3rd/lualib/?.lua;"
 lua_path = lua_path..proj_root.."src/lualib/?.lua;"
 lua_path = lua_path..proj_root.."src/3rd/?.lua;"
 lua_path = lua_path..proj_root.."src/service/?.lua;"
+lua_path = lua_path..proj_root.."assets/src/?.lua;"
 
 lua_cpath = ""
 lua_cpath = lua_cpath..skynet_root.."luaclib/?.so;"
@@ -52,6 +53,9 @@ mysql_user = "hen"
 mysql_pwd = "123456"
 mysql_dbs = "hen"   --dbnames split by ;
 mysql_poolsize = 2  --每个db的连接数
+
+--各个db的实际名称
+mysql_gamedb = "hen"
 
 redis_host = "127.0.0.1"
 redis_port = 6379
