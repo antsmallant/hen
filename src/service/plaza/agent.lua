@@ -44,6 +44,7 @@ local function load_game(game)
     --todo: dynamic load
     if game == "chatting" then
         local tmp = {}
+        -- slot 3,4 set at plaza/protoloader.lua
         tmp.host = sprotoloader.load(3):host "package"
         tmp.pack = tmp.host:attach(sprotoloader.load(4))
         g_gameproto[game] = tmp
@@ -64,9 +65,11 @@ function REQUEST:get_game_list()
     }
 end
 
-local function _game_msg(name, args, response)
-	local f = assert(REQUEST[name])
-	local r = f(args)
+local function _game_msg(game, name, args, response)
+    local mod = g_gamemod[game]
+    assert(mod, game)
+	local f = assert(mod.game_msg, game)
+	local r = f(mod, name, args)
 	if response then
 		return response(r)
 	end
@@ -89,7 +92,7 @@ function REQUEST:game_msg()
     if type ~= "REQUEST" then
         error("game_msg not support type:"..type)
     end
-    local ok, result = pcall(_game_msg, protoname, result, resp)
+    local ok, result = pcall(_game_msg, game, protoname, result, resp)
     if ok then
         return {err = errors.ok, msg = result}
     else
@@ -127,7 +130,7 @@ function CMD.start(conf)
     g_gateway_agent = conf.gateway_agent
 	g_uid = conf.uid
 
-	-- slot 1,2 set at main.lua
+	-- slot 1,2 set at plaza/protoloader.lua
 	g_plaza_host = sprotoloader.load(1):host "package"
 	g_plaza_pack = g_plaza_host:attach(sprotoloader.load(2))
 

@@ -20,7 +20,7 @@ end
 function _mt:game_msg(name, args)
     logger.info("chatting_agent game_msg, name:%s, args:%s",
         name, tostring(args))
-    parent_interface.hello()
+    self.parent_interface.hello()
 
     local f = REQUEST[name]
     if f then

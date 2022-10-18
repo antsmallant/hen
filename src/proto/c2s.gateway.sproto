@@ -15,8 +15,8 @@ verify 1 {
     }
 }
 
-# 中转消息到其他服务器
-transfer 2 {
+# 中转客户端消息到其他服务器
+client_msg 2 {
     request {
         svrname 0 : string   # 服务器名(当svrtype为plazaserver的时候可以不给出)
         svrtype 1 : string   # 服务器类型

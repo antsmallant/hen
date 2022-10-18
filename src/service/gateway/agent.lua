@@ -77,7 +77,7 @@ function REQUEST:verify()
     return {err = errors.invalid_user_or_pwd}
 end
 
-function REQUEST:transfer()
+function REQUEST:client_msg()
     assert(self.svrtype)
     if self.svrtype == "plazaserver" then
         if not g_user.plazasvr then
