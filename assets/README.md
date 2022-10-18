@@ -22,7 +22,7 @@ chmod +x run_allserver.sh && ./run_allserver.sh
 cd assets/tool 
 chmod +x run_client.sh && ./run_client.sh
 ```
-After run, you can type `ggl` then enter to get game list.  
+After run, you can type `ggl` then press enter to get game list.  
 See src/test/client.lua for more CMD.
 
 

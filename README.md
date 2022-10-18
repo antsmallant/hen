@@ -1,11 +1,11 @@
-# What
+# About
 * a game server engine base on [skynet](https://github.com/cloudwu/skynet)
 * distributed support base on etcd, easily expand to support millions online
 * easy to start a new game project
 
 
 # Doc
-* architecture: doc/arch.md
+* architecture: doc/arch_cn.md or doc/arch_en.md
 
 
 # Get started
