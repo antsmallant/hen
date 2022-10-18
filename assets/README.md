@@ -3,7 +3,7 @@
 * if first time
 ```
 cd assets/tool/env
-chmod +x *.sh && ./start_env.sh && ./init_mysql.sh
+chmod +x *.sh && ./start_env.sh && echo "wait 20 seconds for mysqlserver init" && sleep 20s && ./init_mysql.sh
 ```
 * if not the first time
 ```
@@ -28,14 +28,14 @@ See src/test/client.lua for more CMD.
 
 
 # How to stop
-## stop mysql / redis / etcd ...
-```
-cd assets/tool/env
-chmod +x *.sh && ./stop_env.sh
-```
-
 ## stop servers
 ```
 cd assets/tool
 chmod +x kill_allserver.sh && ./kill_allserver.sh
+```
+
+## stop mysql / redis / etcd ...
+```
+cd assets/tool/env
+chmod +x *.sh && ./stop_env.sh
 ```
