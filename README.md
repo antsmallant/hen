@@ -1,12 +1,14 @@
 # What
 * a game server engine base on [skynet](https://github.com/cloudwu/skynet)
-* with many usefull third party libs
-* distributed support base on etcd, easily expand to support millions of players online
-* enough to start a new game project quickly
+* distributed support base on etcd, easily expand to support millions online
+* easy to start a new game project
 
+
+# Doc
+* architecture: doc/arch.md
 
 # Get started
-## clone this project
+## clone
 git clone https://github.com/antsmallant/hen.git
 
 ## install dependencies
@@ -28,7 +30,12 @@ sudo yum install readline-devel
 ```
 
 ## make
-* cd hen && make linux
+```
+cd hen && git submodule update --init --recursive && make linux
+```
 
-## run examples
-* read ./examples/README.md, follow the steps.
+
+## run
+* read ./assets/README.md, follow the steps
+
+
