@@ -7,9 +7,12 @@
 # Doc
 * architecture: doc/arch.md
 
+
 # Get started
 ## clone
+```
 git clone https://github.com/antsmallant/hen.git
+```
 
 ## install dependencies
 * for ubuntu
@@ -33,7 +36,6 @@ sudo yum install readline-devel
 ```
 cd hen && git submodule update --init --recursive && make linux
 ```
-
 
 ## run
 * read ./assets/README.md, follow the steps
